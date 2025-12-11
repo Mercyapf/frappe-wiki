@@ -1,5 +1,5 @@
 <template>
-    <p>Space Details</p>
+    <p>{{ __('Space Details') }}</p>
 
     <WikiDocumentList />
 </template>

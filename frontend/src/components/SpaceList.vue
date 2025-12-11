@@ -1,12 +1,12 @@
 <template>
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold text-ink-gray-9">Wiki Spaces</h2>
+      <h2 class="text-xl font-semibold text-ink-gray-9">{{ __('Wiki Spaces') }}</h2>
       <Button variant="solid" @click="showCreateDialog = true">
         <template #prefix>
           <LucidePlus class="h-4 w-4" />
         </template>
-        New Space
+        {{ __('New Space') }}
       </Button>
     </div>
 
@@ -20,10 +20,10 @@
         resizeColumn: false,
         getRowRoute: (row) => ({ name: 'SpaceDetails', params: { spaceId: row.name } }),
         emptyState: {
-          title: 'No Wiki Spaces',
-          description: 'Create your first wiki space to get started',
+          title: __('No Wiki Spaces'),
+          description: __('Create your first wiki space to get started'),
           button: {
-            label: 'New Space',
+            label: __('New Space'),
             variant: 'solid',
             onClick: () => (showCreateDialog = true),
           },
@@ -35,11 +35,11 @@
     <Dialog
       v-model="showCreateDialog"
       :options="{
-        title: 'Create Wiki Space',
+        title: __('Create Wiki Space'),
         size: 'lg',
         actions: [
           {
-            label: 'Create',
+            label: __('Create'),
             variant: 'solid',
             onClick: handleCreateSpace,
           },
@@ -50,18 +50,18 @@
         <div class="flex flex-col gap-4">
           <FormControl
             type="text"
-            label="Space Name"
+            :label="__('Space Name')"
             v-model="newSpace.space_name"
-            placeholder="My Wiki Space"
+            :placeholder="__('My Wiki Space')"
           />
           <FormControl
             type="text"
-            label="Route"
+            :label="__('Route')"
             required
             :modelValue="newSpace.route"
             @update:modelValue="handleRouteInput"
-            placeholder="my-wiki-space"
-            :description="'The URL path for this wiki space (e.g., /my-wiki-space)'"
+            :placeholder="__('my-wiki-space')"
+            :description="__('The URL path for this wiki space (e.g., /my-wiki-space)')"
           />
         </div>
       </template>
@@ -115,12 +115,12 @@ function handleRouteInput(value) {
 
 const columns = [
   {
-    label: "Space Name",
+    label: __("Space Name"),
     key: "space_name",
     width: 2,
   },
   {
-    label: "Route",
+    label: __("Route"),
     key: "route",
     width: 2,
   },

@@ -1,5 +1,5 @@
 <template>
-    <Button :loading="!editor && editor.loading" @click="saveToDB">Save to DB</Button>
+    <Button :loading="!editor && editor.loading" @click="saveToDB">{{ __('Save to DB') }}</Button>
 
     <div class="border border-gray-300 rounded-md min-h-28">
         <Milkdown autofocus />

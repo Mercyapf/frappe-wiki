@@ -1,6 +1,6 @@
 <template>
-    <p>Wiki Document List</p>
-    <Button variant="solid">New Page
+    <p>{{ __('Wiki Document List') }}</p>
+    <Button variant="solid">{{ __('New Page') }}
         <template #prefix>
             <LucideAdd class="size-4" />
         </template>

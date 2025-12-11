@@ -1,15 +1,15 @@
 <template>
 <Sidebar :header="{
-			title: 'Frappe Wiki',
+			title: __('Frappe Wiki'),
 			logo: '/assets/wiki/images/wiki-logo.png',
-			menuItems: [ { label: 'Toggle Theme', icon: themeIcon, onClick: toggleTheme },]
+			menuItems: [ { label: __('Toggle Theme'), icon: themeIcon, onClick: toggleTheme },]
 		}"
 
 		:sections="[
 			{
 				label: '',
 				items: [
-					{label: 'Spaces', icon: LucideRocket, to: { name: 'SpaceList' }},
+					{label: __('Spaces'), icon: LucideRocket, to: { name: 'SpaceList' }},
 				]
 			}
 		]"/>
