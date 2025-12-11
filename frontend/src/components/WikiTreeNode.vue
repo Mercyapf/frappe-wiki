@@ -135,12 +135,12 @@ const dropdownOptions = computed(() => {
             group: __('Add'),
             items: [
                 {
-                    label: __('Add Page'),
+                    label: __('Page'),
                     icon: 'file-plus',
                     onClick: () => emit('create', props.node.name, false),
                 },
                 {
-                    label: __('Add Group'),
+                    label: __('Group'),
                     icon: 'folder-plus',
                     onClick: () => emit('create', props.node.name, true),
                 },
