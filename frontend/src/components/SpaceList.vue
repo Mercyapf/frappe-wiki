@@ -18,6 +18,7 @@
         selectable: false,
         showTooltip: true,
         resizeColumn: false,
+        getRowRoute: (row) => ({ name: 'SpaceDetails', params: { spaceId: row.name } }),
         emptyState: {
           title: 'No Wiki Spaces',
           description: 'Create your first wiki space to get started',
