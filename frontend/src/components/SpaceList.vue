@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 p-4">
     <div class="flex items-center justify-between">
       <h2 class="text-xl font-semibold text-ink-gray-9">{{ __('Wiki Spaces') }}</h2>
       <Button variant="solid" @click="showCreateDialog = true">
