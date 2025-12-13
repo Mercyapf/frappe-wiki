@@ -2,7 +2,7 @@
     <div class="h-full flex flex-col">
         <div v-if="wikiDoc.doc" class="h-full flex flex-col">
             <!-- Page Header (Sticky) -->
-            <div class="flex items-center justify-between p-6 pb-4 bg-surface-white shrink-0">
+            <div class="flex items-center justify-between p-6 pb-4 bg-surface-white shrink-0 border-b-2 border-b-gray-500/20">
                 <!-- Title with Badge -->
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-semibold text-ink-gray-9">{{ wikiDoc.doc.title }}</h1>
