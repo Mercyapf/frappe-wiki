@@ -1,5 +1,5 @@
 {% extends "templates/wiki/layout.html" %}
-{% from "templates/wiki/macros/buttons.html" import ghost_button, render_icon %}
+{% from "templates/wiki/macros/buttons.html" import ghost_button, render_icon, dropdown, dropdown_item, dropdown_end %}
 
 {% block title %}
     {{ doc.title }}
@@ -26,6 +26,19 @@
                     </template>
                     <span x-text="copied ? 'Copied!' : 'Copy Markdown'"></span>
                 </button>
+
+                <!-- Ask AI Dropdown -->
+                {% set ai_providers = [
+                    {"key": "claude", "text": "Ask Claude", "icon": "claude"},
+                    {"key": "openai", "text": "Ask OpenAI", "icon": "openai"},
+                    {"key": "t3", "text": "Ask T3 Chat", "icon": "t3"},
+                    {"key": "perplexity", "text": "Ask Perplexity", "icon": "perplexity"}
+                ] %}
+                {{ dropdown(text="Ask AI", icon="sparkles") }}
+                    {% for provider in ai_providers %}
+                        {{ dropdown_item(text=provider.text, icon=provider.icon, href_expr="getAIUrl('" ~ provider.key ~ "')") }}
+                    {% endfor %}
+                {{ dropdown_end() }}
 
                 <!-- Edit Page Link -->
                 {{ ghost_button(text="Edit Page", icon="edit", href=doc.get_edit_link()) }}
@@ -56,6 +69,17 @@
                 }).catch(err => {
                     console.error('Failed to copy markdown:', err);
                 });
+            },
+
+            getAIUrl(provider) {
+                const encodedContent = encodeURIComponent(this.markdown);
+                const urls = {
+                    'claude': `https://claude.ai/new?q=${encodedContent}`,
+                    'openai': `https://chatgpt.com/?q=${encodedContent}`,
+                    't3': `https://t3.chat/new?q=${encodedContent}`,
+                    'perplexity': `https://www.perplexity.ai/search?q=${encodedContent}`
+                };
+                return urls[provider] || '#';
             }
         }
     }
