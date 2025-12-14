@@ -248,8 +248,6 @@ onUnmounted(() => {
 .wiki-milkdown-editor {
     flex: 1;
     min-height: 500px;
-    border: 1px solid var(--gray-200, #e5e7eb);
-    border-radius: 0.5rem;
     background-color: var(--surface-white, #ffffff);
     position: relative;
 }
