@@ -107,7 +107,7 @@ const menuOptions = computed(() => {
         options.push({
             label: __('View Page'),
             icon: 'external-link',
-            onClick: () => window.open(`http://wiki.localhost:8000/${wikiDoc.doc.route}`, '_blank'),
+            onClick: () => window.open(`/${wikiDoc.doc.route}`, '_blank'),
         });
     }
 
