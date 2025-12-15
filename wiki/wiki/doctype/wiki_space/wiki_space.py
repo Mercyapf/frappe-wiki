@@ -52,7 +52,11 @@ class WikiSpace(Document):
 			root_group.insert()
 			self.root_group = root_group.name
 
+	@frappe.whitelist()
 	def migrate_to_v3(self):
+		self.create_root_group()
+		self.save()
+
 		sidebar = self.wiki_sidebars
 		if not sidebar:
 			return
