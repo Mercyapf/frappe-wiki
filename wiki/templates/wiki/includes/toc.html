@@ -79,9 +79,13 @@
                     if (!heading.id) {
                         heading.id = `heading-${index}`;
                     }
+                    // Get text before adding anchor
+                    const text = heading.textContent.trim();
+                    // Add anchor link if not already present
+                    this.addAnchorLink(heading);
                     return {
                         id: heading.id,
-                        text: heading.textContent.trim(),
+                        text: text,
                         level: parseInt(heading.tagName.charAt(1))
                     };
                 });
@@ -128,6 +132,26 @@
                     // Update URL hash without jumping
                     history.pushState(null, null, `#${id}`);
                 }
+            },
+
+            addAnchorLink(heading) {
+                // Skip if anchor already exists
+                if (heading.querySelector('.heading-anchor')) return;
+
+                const anchor = document.createElement('a');
+                anchor.href = `#${heading.id}`;
+                anchor.className = 'heading-anchor';
+                anchor.setAttribute('aria-label', `Link to ${heading.textContent.trim()}`);
+                anchor.textContent = '#';
+
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.scrollToHeading(heading.id);
+                    // Copy URL to clipboard
+                    navigator.clipboard.writeText(window.location.origin + window.location.pathname + `#${heading.id}`);
+                });
+
+                heading.insertBefore(anchor, heading.firstChild);
             },
 
             destroy() {
