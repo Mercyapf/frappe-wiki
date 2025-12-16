@@ -54,6 +54,9 @@ class WikiSpace(Document):
 
 	@frappe.whitelist()
 	def migrate_to_v3(self):
+		if self.root_group:
+			return  # Migration already done
+
 		self.create_root_group()
 		self.save()
 
@@ -66,7 +69,7 @@ class WikiSpace(Document):
 		for sort_order, group_label in enumerate(group_order):
 			self._create_group_with_pages(group_label, groups[group_label], sort_order)
 
-		frappe.db.commit()
+		self.save()
 
 	def _group_sidebar_items(self, sidebar):
 		"""Group sidebar items by parent_label while maintaining order"""

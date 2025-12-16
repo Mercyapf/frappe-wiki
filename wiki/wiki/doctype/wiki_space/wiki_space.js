@@ -11,7 +11,8 @@ frappe.ui.form.on("Wiki Space", {
       });
     });
 
-    frm.add_custom_button(__("Migrate to Version 3"), () => {
+    if (!frm.doc.root_group) {
+      frm.add_custom_button(__("Migrate to Version 3"), () => {
       frappe.confirm(
         __("This will migrate the sidebar to tree-based Wiki Documents. Continue?"),
         () => {
@@ -22,6 +23,7 @@ frappe.ui.form.on("Wiki Space", {
         }
       );
     });
+    }
   },
 
   onload_post_render: function (frm) {
