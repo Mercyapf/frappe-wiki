@@ -38,10 +38,10 @@ CALLOUT_ICONS = {
 }
 
 # Pattern to match callout blocks
-# Matches: :::type or :::type[title]
+# Matches: :::type or :::type[title] or :::type\[title] (escaped bracket from editor)
 # Content continues until closing :::
 CALLOUT_PATTERN = re.compile(
-	r"^:::(?P<type>note|tip|caution|danger|warning)(?:\[(?P<title>[^\]]*)\])?\s*\n(?P<content>[\s\S]*?)\n:::[ \t]*$",
+	r"^:::(?P<type>note|tip|caution|danger|warning)(?:\\?\[(?P<title>[^\]]*)\])?\s*\n(?P<content>[\s\S]*?)\n:::[ \t]*$",
 	re.MULTILINE,
 )
 
@@ -55,6 +55,10 @@ def _process_callout_match(match, md_instance):
 	# Normalize warning to caution for consistency
 	if callout_type == "warning":
 		callout_type = "caution"
+
+	# Remove escape backslashes from title (editor escapes special chars like !)
+	if title:
+		title = title.replace("\\", "")
 
 	# Use default title if none provided
 	if not title:

@@ -15,6 +15,7 @@ import { ref, onUnmounted } from "vue";
 import { Crepe } from "@milkdown/crepe";
 import { Milkdown, useEditor, useInstance } from "@milkdown/vue";
 import { upload, uploadConfig } from "@milkdown/kit/plugin/upload";
+import { editorViewCtx, schemaCtx } from "@milkdown/kit/core";
 import { useFileUpload, toast } from "frappe-ui";
 // Import image-block components WITHOUT the remark plugin (we use our own)
 import {
@@ -33,6 +34,13 @@ import {
     videoBlockView,
     videoBlockConfig
 } from "./milkdown-video-block/index.js";
+// Import callout block components for Astro Starlight-style callouts
+import {
+    remarkCalloutBlockPlugin,
+    calloutBlockSchema,
+    calloutBlockView,
+    calloutBlockConfig
+} from "./milkdown-callout-block/index.js";
 
 const props = defineProps({
     content: {
@@ -152,6 +160,14 @@ const content = props.content || "";
 // Store the Crepe instance for later access
 let crepeInstance = null;
 
+// SVG icons for callout menu items
+const calloutIcons = {
+    note: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
+    tip: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+    caution: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
+    danger: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>`,
+};
+
 const editor = useEditor((root) => {
     crepeInstance = new Crepe({
         root,
@@ -160,6 +176,74 @@ const editor = useEditor((root) => {
         // We load our own unified media plugin that handles both images and videos
         features: {
             [Crepe.Feature.ImageBlock]: false,
+        },
+        featureConfigs: {
+            [Crepe.Feature.BlockEdit]: {
+                buildMenu: (builder) => {
+                    // Add a "Callouts" group to the slash menu
+                    builder.addGroup('callouts', 'Callouts')
+                        .addItem('note', {
+                            label: 'Note',
+                            icon: calloutIcons.note,
+                            onRun: (ctx) => {
+                                const view = ctx.get(editorViewCtx);
+                                const schema = ctx.get(schemaCtx);
+                                const nodeType = schema.nodes['callout-block'];
+                                if (nodeType) {
+                                    const node = nodeType.create({ type: 'note', content: '' });
+                                    const { state } = view;
+                                    const tr = state.tr.replaceSelectionWith(node);
+                                    view.dispatch(tr);
+                                }
+                            },
+                        })
+                        .addItem('tip', {
+                            label: 'Tip',
+                            icon: calloutIcons.tip,
+                            onRun: (ctx) => {
+                                const view = ctx.get(editorViewCtx);
+                                const schema = ctx.get(schemaCtx);
+                                const nodeType = schema.nodes['callout-block'];
+                                if (nodeType) {
+                                    const node = nodeType.create({ type: 'tip', content: '' });
+                                    const { state } = view;
+                                    const tr = state.tr.replaceSelectionWith(node);
+                                    view.dispatch(tr);
+                                }
+                            },
+                        })
+                        .addItem('caution', {
+                            label: 'Caution',
+                            icon: calloutIcons.caution,
+                            onRun: (ctx) => {
+                                const view = ctx.get(editorViewCtx);
+                                const schema = ctx.get(schemaCtx);
+                                const nodeType = schema.nodes['callout-block'];
+                                if (nodeType) {
+                                    const node = nodeType.create({ type: 'caution', content: '' });
+                                    const { state } = view;
+                                    const tr = state.tr.replaceSelectionWith(node);
+                                    view.dispatch(tr);
+                                }
+                            },
+                        })
+                        .addItem('danger', {
+                            label: 'Danger',
+                            icon: calloutIcons.danger,
+                            onRun: (ctx) => {
+                                const view = ctx.get(editorViewCtx);
+                                const schema = ctx.get(schemaCtx);
+                                const nodeType = schema.nodes['callout-block'];
+                                if (nodeType) {
+                                    const node = nodeType.create({ type: 'danger', content: '' });
+                                    const { state } = view;
+                                    const tr = state.tr.replaceSelectionWith(node);
+                                    view.dispatch(tr);
+                                }
+                            },
+                        });
+                },
+            },
         },
     });
 
@@ -195,6 +279,11 @@ const editor = useEditor((root) => {
         .use(videoBlockSchema)
         .use(videoBlockView)
         .use(videoBlockConfig)
+        // Callout block components for :::note, :::tip, etc.
+        .use(remarkCalloutBlockPlugin)
+        .use(calloutBlockSchema)
+        .use(calloutBlockView)
+        .use(calloutBlockConfig)
         // Upload plugin for drag-and-drop
         .use(upload);
 
