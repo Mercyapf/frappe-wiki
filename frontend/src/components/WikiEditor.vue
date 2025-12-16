@@ -16,7 +16,23 @@ import { Crepe } from "@milkdown/crepe";
 import { Milkdown, useEditor, useInstance } from "@milkdown/vue";
 import { upload, uploadConfig } from "@milkdown/kit/plugin/upload";
 import { useFileUpload, toast } from "frappe-ui";
-import { videoBlockComponent } from "./milkdown-video-block/index.js";
+// Import image-block components WITHOUT the remark plugin (we use our own)
+import {
+    imageBlockSchema,
+    imageBlockView,
+    imageBlockConfig,
+} from "@milkdown/kit/component/image-block";
+import {
+    imageInlineComponent,
+    inlineImageConfig,
+} from "@milkdown/kit/component/image-inline";
+// Import our unified media remark plugin that handles both images and videos
+import {
+    remarkMediaBlockPlugin,
+    videoBlockSchema,
+    videoBlockView,
+    videoBlockConfig
+} from "./milkdown-video-block/index.js";
 
 const props = defineProps({
     content: {
@@ -137,28 +153,51 @@ const content = props.content || "";
 let crepeInstance = null;
 
 const editor = useEditor((root) => {
-    crepeInstance = new Crepe({ 
-        root, 
+    crepeInstance = new Crepe({
+        root,
         defaultValue: content,
-        featureConfigs: {
-            [Crepe.Feature.ImageBlock]: {
-                onUpload: uploadImage,
-            },
+        // IMPORTANT: Disable Crepe's built-in ImageBlock feature
+        // We load our own unified media plugin that handles both images and videos
+        features: {
+            [Crepe.Feature.ImageBlock]: false,
         },
     });
-    
-    // Add the upload plugin for drag-and-drop support
-    // Access the underlying Milkdown editor to add plugins
+
+    // Configure and load plugins manually:
+    // 1. Our unified remark plugin that transforms paragraphs with images into
+    //    either video-block (for video URLs) or image-block (for image URLs)
+    // 2. Image-block schema, view, config (without Milkdown's remark plugin)
+    // 3. Video-block schema, view, config
+    // 4. Upload plugin for drag-and-drop
     crepeInstance.editor
+        // Unified media remark plugin - handles both images and videos
+        .use(remarkMediaBlockPlugin)
+        // Image block components (schema, view, config) - NO remark plugin
         .config((ctx) => {
+            ctx.update(imageBlockConfig.key, (value) => ({
+                ...value,
+                onUpload: uploadImage,
+            }));
+            ctx.update(inlineImageConfig.key, (value) => ({
+                ...value,
+                onUpload: uploadImage,
+            }));
             ctx.update(uploadConfig.key, (prev) => ({
                 ...prev,
                 uploader: dragDropUploader,
             }));
         })
-        .use(upload)
-        .use(videoBlockComponent);
-    
+        .use(imageBlockSchema)
+        .use(imageBlockView)
+        .use(imageBlockConfig)
+        .use(imageInlineComponent)
+        // Video block components
+        .use(videoBlockSchema)
+        .use(videoBlockView)
+        .use(videoBlockConfig)
+        // Upload plugin for drag-and-drop
+        .use(upload);
+
     return crepeInstance;
 });
 

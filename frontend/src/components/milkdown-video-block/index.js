@@ -10,12 +10,18 @@
  */
 
 import { videoBlockConfig } from './config.js';
-import { remarkVideoBlockPlugin } from './remark-plugin.js';
+import {
+	remarkMediaBlockPlugin,
+	remarkVideoBlockPlugin,
+} from './remark-plugin.js';
 import { videoBlockSchema } from './schema.js';
 import { videoBlockView } from './view.js';
 
 export { videoBlockConfig } from './config.js';
-export { remarkVideoBlockPlugin } from './remark-plugin.js';
+export {
+	remarkVideoBlockPlugin,
+	remarkMediaBlockPlugin,
+} from './remark-plugin.js';
 export { videoBlockSchema } from './schema.js';
 export { videoBlockView } from './view.js';
 

@@ -54,9 +54,15 @@ export const videoBlockSchema = $nodeSchema('video-block', () => ({
 	toMarkdown: {
 		match: (node) => node.type.name === 'video-block',
 		runner: (state, node) => {
-			const { src } = node.attrs;
-			// Output as image markdown syntax: ![](url) on its own line
-			state.write(`\n![](${src})\n`);
+			// Output as image markdown syntax: ![](url) wrapped in a paragraph
+			// This mirrors how image-block serializes to markdown
+			state.openNode('paragraph');
+			state.addNode('image', undefined, undefined, {
+				url: node.attrs.src,
+				alt: '',
+				title: null,
+			});
+			state.closeNode();
 		},
 	},
 }));
