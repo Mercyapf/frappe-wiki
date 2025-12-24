@@ -20,6 +20,9 @@ add_to_apps_screen = [
 page_renderer = "wiki.frappe_wiki.doctype.wiki_document.wiki_document.WikiDocumentRenderer"
 export_python_type_annotations = True
 
+# SQLite Search
+sqlite_search = ["wiki.frappe_wiki.doctype.wiki_document.wiki_sqlite_search.WikiSQLiteSearch"]
+
 # Includes in <head>
 # ------------------
 

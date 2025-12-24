@@ -25,8 +25,12 @@
                 </div>
             </div>
 
-            <!-- Right: Theme Toggle -->
+            <!-- Right: Search and Theme Toggle -->
             <div class="flex items-center gap-2">
+                <button @click="$dispatch('open-search')"
+                        class="p-2 text-[var(--ink-gray-5)] hover:text-[var(--ink-gray-9)] hover:bg-[var(--surface-gray-2)] rounded-md transition-colors duration-200">
+                    {{ render_icon("search") }}
+                </button>
                 <button @click="$store.theme.toggle()"
                         class="p-2 text-[var(--ink-gray-5)] hover:text-[var(--ink-gray-9)] hover:bg-[var(--surface-gray-2)] rounded-md transition-colors duration-200">
                     <template x-if="$store.theme.isDark">
