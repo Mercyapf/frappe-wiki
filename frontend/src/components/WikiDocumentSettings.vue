@@ -13,6 +13,11 @@
                     v-model="settingsForm.route"
                     :placeholder="__('e.g., docs/getting-started')"
                 />
+                <Checkbox
+                    v-model="settingsForm.is_private"
+                    :label="__('Private')"
+                    :description="__('Private pages require users to be logged in to view.')"
+                />
             </div>
         </template>
         <template #actions="{ close }">
@@ -34,7 +39,7 @@
 
 <script setup>
 import { reactive, watch } from 'vue';
-import { createResource, Button, Dialog, FormControl, toast } from "frappe-ui";
+import { createResource, Button, Dialog, FormControl, Checkbox, toast } from "frappe-ui";
 
 const props = defineProps({
     pageId: {
@@ -52,12 +57,14 @@ const emit = defineEmits(['saved']);
 
 const settingsForm = reactive({
     route: '',
+    is_private: false,
 });
 
 // Initialize form when dialog opens
 watch(show, (isOpen) => {
     if (isOpen && props.doc) {
         settingsForm.route = props.doc.route || '';
+        settingsForm.is_private = Boolean(props.doc.is_private);
     }
 });
 
@@ -79,6 +86,7 @@ function saveSettings() {
         name: props.pageId,
         fieldname: {
             route: settingsForm.route,
+            is_private: settingsForm.is_private ? 1 : 0,
         },
     });
 }

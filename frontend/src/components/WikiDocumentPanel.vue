@@ -6,6 +6,7 @@
                 <!-- Title with Badge -->
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-semibold text-ink-gray-9">{{ wikiDoc.doc.title }}</h1>
+                    <LucideLock v-if="wikiDoc.doc.is_private" class="size-4 text-ink-gray-5" :title="__('Private')" />
                     <Badge v-if="wikiDoc.doc.is_published" variant="subtle" theme="green" size="sm">
                         {{ __('Published') }}
                     </Badge>
@@ -60,6 +61,7 @@ import WikiEditor from './WikiEditor.vue';
 import WikiDocumentSettings from './WikiDocumentSettings.vue';
 import LucideSave from '~icons/lucide/save';
 import LucideMoreVertical from '~icons/lucide/more-vertical';
+import LucideLock from '~icons/lucide/lock';
 
 const props = defineProps({
     pageId: {

@@ -19,6 +19,7 @@ class WikiDocument(NestedSet):
 
 		content: DF.MarkdownEditor | None
 		is_group: DF.Check
+		is_private: DF.Check
 		is_published: DF.Check
 		lft: DF.Int
 		old_parent: DF.Link | None
@@ -109,6 +110,17 @@ class WikiDocument(NestedSet):
 			return ""
 		return f"/frontend/spaces/{wiki_space.name}/page/{self.name}"
 
+	def check_guest_access(self):
+		"""
+		Check if the current user has permission to view this document.
+		Raises PermissionError if access is denied.
+		"""
+		if self.is_private and frappe.session.user == "Guest":
+			frappe.throw(
+				frappe._("You must be logged in to view this page"),
+				frappe.PermissionError,
+			)
+
 	def get_tree_and_navigation(self) -> tuple[list, dict]:
 		"""
 		Get the wiki tree and adjacent documents for navigation.
@@ -164,6 +176,7 @@ class WikiDocument(NestedSet):
 
 	def get_web_context(self) -> dict:
 		"""Get all context needed to render this Wiki Document."""
+		self.check_guest_access()
 		wiki_space = self.get_wiki_space()
 		wiki_space_doc = frappe.get_cached_doc("Wiki Space", wiki_space.name) if wiki_space else None
 		nested_tree, adjacent_docs = self.get_tree_and_navigation()
@@ -171,12 +184,15 @@ class WikiDocument(NestedSet):
 
 		return {
 			"doc": self,
+			"title": self.title,
+			"route": self.route,
 			"wiki_space": wiki_space_doc,
 			"rendered_content": content_html,
 			"raw_markdown": self.content or "",
 			"nested_tree": nested_tree,
 			"prev_doc": adjacent_docs["prev"],
 			"next_doc": adjacent_docs["next"],
+			"edit_link": self.get_edit_link(),
 		}
 
 	@frappe.whitelist()
@@ -302,17 +318,7 @@ def get_page_data(route: str) -> dict:
 		frappe.throw(frappe._("Page not found"), frappe.DoesNotExistError)
 
 	doc = frappe.get_cached_doc("Wiki Document", doc_name)
-	nested_tree, adjacent_docs = doc.get_tree_and_navigation()
-
-	return {
-		"title": doc.title,
-		"route": doc.route,
-		"content_html": render_markdown(doc.content),
-		"raw_markdown": doc.content or "",
-		"prev_doc": adjacent_docs["prev"],
-		"next_doc": adjacent_docs["next"],
-		"edit_link": doc.get_edit_link(),
-	}
+	return doc.get_web_context()
 
 
 def get_adjacent_documents(nested_tree: list, current_route: str) -> dict:

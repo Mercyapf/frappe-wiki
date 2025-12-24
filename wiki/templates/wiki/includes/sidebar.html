@@ -182,7 +182,7 @@
 
                 // Update content
                 const contentEl = document.getElementById('wiki-content');
-                if (contentEl) contentEl.innerHTML = data.content_html;
+                if (contentEl) contentEl.innerHTML = data.rendered_content;
 
                 // Update prev/next navigation
                 this.updateNavButtons(data.prev_doc, data.next_doc);

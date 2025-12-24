@@ -10,6 +10,7 @@
 		"route",
 		"column_break_sfff",
 		"is_published",
+		"is_private",
 		"section_break_eooe",
 		"content",
 		"section_break_j5x7",
@@ -99,13 +100,19 @@
 		{
 			"fieldname": "section_break_eooe",
 			"fieldtype": "Section Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "is_private",
+			"fieldtype": "Check",
+			"label": "Is Private?"
 		}
 	],
 	"grid_page_length": 50,
 	"index_web_pages_for_search": 1,
 	"is_tree": 1,
 	"links": [],
-	"modified": "2025-12-17 10:39:12.584569",
+	"modified": "2025-12-24 12:10:21.798260",
 	"modified_by": "Administrator",
 	"module": "Frappe Wiki",
 	"name": "Wiki Document",

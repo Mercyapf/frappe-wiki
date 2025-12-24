@@ -111,6 +111,7 @@ class WikiSpace(Document):
 				"route": wiki_page.route,
 				"is_group": 0,
 				"is_published": wiki_page.published,
+				"is_private": not wiki_page.allow_guest,
 				"content": wiki_page.content,
 				"parent_wiki_document": parent_group,
 				"sort_order": sort_order,
