@@ -8,6 +8,23 @@ from frappe.utils import validate_email_address
 
 
 class WikiFeedback(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		email_id: DF.Data | None
+		feedback: DF.SmallText | None
+		rating: DF.Rating
+		status: DF.Literal["Open", "Closed"]
+		type: DF.Literal["Good", "Bad", "Ok"]
+		wiki_document: DF.Link
+		wiki_page: DF.Link | None
+	# end: auto-generated types
+
 	pass
 
 
