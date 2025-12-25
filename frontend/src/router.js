@@ -14,6 +14,17 @@ const routes = [
 		component: () => import('@/pages/Spaces.vue'),
 	},
 	{
+		path: '/contributions',
+		name: 'Contributions',
+		component: () => import('@/pages/Contributions.vue'),
+	},
+	{
+		path: '/contributions/:batchId',
+		name: 'ContributionReview',
+		component: () => import('@/pages/ContributionReview.vue'),
+		props: true,
+	},
+	{
 		path: '/spaces/:spaceId',
 		component: () => import('@/pages/SpaceDetails.vue'),
 		props: true,
@@ -27,6 +38,12 @@ const routes = [
 				path: 'page/:pageId',
 				name: 'SpacePage',
 				component: () => import('@/components/WikiDocumentPanel.vue'),
+				props: true,
+			},
+			{
+				path: 'draft/:contributionId',
+				name: 'DraftContribution',
+				component: () => import('@/components/DraftContributionPanel.vue'),
 				props: true,
 			},
 		],

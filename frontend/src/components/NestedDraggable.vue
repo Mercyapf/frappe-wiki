@@ -14,15 +14,13 @@
     >
         <template #item="{ element }">
             <div class="draggable-item">
-                <!-- Node Row -->
                 <div
-                    class="flex items-center justify-between pr-2 py-1.5 hover:bg-surface-gray-2 group border-b border-outline-gray-1 cursor-pointer"
-                    :class="{ 'bg-surface-gray-3': !element.is_group && element.name === selectedPageId }"
+                    class="flex items-center justify-between pr-2 py-1.5 hover:bg-surface-gray-2 group border-b border-outline-gray-1"
+                    :class="getRowClasses(element)"
                     :style="{ paddingLeft: `${level * 12 + 8}px` }"
                     @click="handleRowClick(element)"
                 >
                     <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                        <!-- Drag Handle -->
                         <button 
                             class="drag-handle p-0.5 hover:bg-surface-gray-3 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
                             @click.stop
@@ -30,7 +28,6 @@
                             <LucideGripVertical class="size-4 text-ink-gray-4" />
                         </button>
 
-                        <!-- Expand/Collapse Toggle for Groups -->
                         <button 
                             v-if="element.is_group" 
                             class="p-0.5 hover:bg-surface-gray-3 rounded"
@@ -43,25 +40,36 @@
                         </button>
                         <div v-else class="w-4" />
 
-                        <!-- Icon -->
                         <LucideFolder v-if="element.is_group" class="size-4 text-ink-gray-5 flex-shrink-0" />
                         <LucideFileText v-else class="size-4 text-ink-gray-5 flex-shrink-0" />
 
-                        <!-- Title -->
-                        <span 
-                            class="text-sm truncate" 
-                            :class="(element.is_published || element.is_group) ? 'text-ink-gray-8' : 'text-ink-gray-5'"
+                        <span
+                            class="text-sm truncate"
+                            :class="getTitleClass(element)"
                         >
-                            {{ element.title }}
+                            {{ element._draftTitle || element.title }}
                         </span>
 
-                        <!-- Not Published Badge (only for pages, not groups) -->
-                        <Badge v-if="!element.is_group && !element.is_published" variant="subtle" theme="orange" size="sm">
+                        <Badge v-if="element._isDraft" variant="subtle" theme="blue" size="sm">
+                            {{ __('New') }}
+                        </Badge>
+                        <Badge v-else-if="element._isDeleted" variant="subtle" theme="red" size="sm">
+                            {{ __('Deleted') }}
+                        </Badge>
+                        <Badge v-else-if="element._isMoved" variant="subtle" theme="purple" size="sm">
+                            {{ __('Moved') }}
+                        </Badge>
+                        <Badge v-else-if="element._isModified" variant="subtle" theme="blue" size="sm">
+                            {{ __('Modified') }}
+                        </Badge>
+                        <Badge v-else-if="element._isReordered" variant="subtle" theme="gray" size="sm">
+                            {{ __('Reordered') }}
+                        </Badge>
+                        <Badge v-else-if="!element.is_group && !element.is_published" variant="subtle" theme="orange" size="sm">
                             {{ __('Not Published') }}
                         </Badge>
                     </div>
 
-                    <!-- Actions -->
                     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
                         <Dropdown :options="getDropdownOptions(element)">
                             <Button variant="ghost" size="sm">
@@ -71,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Children (nested draggable for groups) -->
                 <div v-if="element.is_group" v-show="isExpanded(element.name)">
                     <NestedDraggable
                         :items="element.children || []"
@@ -79,6 +86,7 @@
                         :parent-name="element.name"
                         :space-id="spaceId"
                         :selected-page-id="selectedPageId"
+                        :selected-contribution-id="selectedContributionId"
                         @create="(parent, isGroup) => emit('create', parent, isGroup)"
                         @delete="(n) => emit('delete', n)"
                         @update="handleNestedUpdate"
@@ -126,20 +134,21 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    selectedContributionId: {
+        type: String,
+        default: null,
+    },
 });
 
 const emit = defineEmits(['create', 'delete', 'update']);
 const router = useRouter();
 
-// Local copy of items for draggable to mutate
 const localItems = ref([...props.items]);
 
-// Watch for external changes to items prop
 watch(() => props.items, (newItems) => {
     localItems.value = [...newItems];
 }, { deep: true });
 
-// Store expanded state in localStorage, collapsed by default
 const expandedNodes = useStorage('wiki-tree-expanded-nodes', {});
 
 function isExpanded(name) {
@@ -151,6 +160,23 @@ function toggleExpanded(name) {
 }
 
 function handleRowClick(element) {
+    if (element._isDeleted) {
+        return;
+    }
+
+    if (element._isDraft) {
+        if (element.is_group) {
+            // Draft groups can still be expanded/collapsed
+            toggleExpanded(element.name);
+        } else {
+            router.push({
+                name: 'DraftContribution',
+                params: { spaceId: props.spaceId, contributionId: element._contribution }
+            });
+        }
+        return;
+    }
+
     if (element.is_group) {
         toggleExpanded(element.name);
     } else {
@@ -158,8 +184,36 @@ function handleRowClick(element) {
     }
 }
 
+function getRowClasses(element) {
+    const classes = [];
+
+    const isSelectedPage = !element.is_group && element.name === props.selectedPageId;
+    const isSelectedDraft = element._isDraft && element._contribution === props.selectedContributionId;
+
+    if (isSelectedPage || isSelectedDraft) {
+        classes.push('bg-surface-gray-3');
+    }
+
+    if (element._isDeleted) {
+        classes.push('cursor-not-allowed', 'opacity-60');
+    } else {
+        classes.push('cursor-pointer');
+    }
+
+    return classes;
+}
+
+function getTitleClass(element) {
+    if (element._isDeleted) {
+        return 'text-ink-gray-4 line-through';
+    }
+    if (element._isDraft || element.is_published || element.is_group) {
+        return 'text-ink-gray-8';
+    }
+    return 'text-ink-gray-5';
+}
+
 function handleChange(evt) {
-    // Emit update event with the change information
     if (evt.added || evt.moved) {
         const item = evt.added?.element || evt.moved?.element;
         const newIndex = evt.added?.newIndex ?? evt.moved?.newIndex;
@@ -175,11 +229,9 @@ function handleChange(evt) {
 }
 
 function handleNestedUpdate(payload) {
-    // Bubble up the update event
     emit('update', payload);
 }
 
-// Publish/Unpublish functionality
 function createPublishResource(element) {
     return createResource({
         url: 'frappe.client.set_value',
@@ -206,7 +258,6 @@ function createPublishResource(element) {
 function getDropdownOptions(element) {
     const options = [];
 
-    // Add child options for groups
     if (element.is_group) {
         options.push(...[
                 {
@@ -222,7 +273,6 @@ function getDropdownOptions(element) {
             ]);
     }
 
-    // Publish/Unpublish option for non-groups (pages)
     if (!element.is_group) {
         options.push({
             label: element.is_published ? __('Unpublish') : __('Publish'),
@@ -234,7 +284,6 @@ function getDropdownOptions(element) {
         });
     }
 
-    // Danger zone - only show delete if it's not a group with children
     const hasChildren = element.is_group && element.children?.length > 0;
     if (!hasChildren) {
         options.push({

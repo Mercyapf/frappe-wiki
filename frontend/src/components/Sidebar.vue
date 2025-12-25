@@ -1,30 +1,32 @@
 <template>
 <Sidebar
 	:collapsed="isSidebarCollapsed"
- :header="{
-			title: __('Frappe Wiki'),
-			logo: '/assets/wiki/images/wiki-logo.png',
-			menuItems: [ { label: __('Toggle Theme'), icon: themeIcon, onClick: toggleTheme },]
-		}"
-
-		:sections="[
-			{
-				label: '',
-				items: [
-					{label: __('Spaces'), icon: LucideRocket, to: { name: 'SpaceList' }},
-				]
-			}
-		]"/>
+	:header="{
+		title: __('Frappe Wiki'),
+		logo: '/assets/wiki/images/wiki-logo.png',
+		menuItems: [{ label: __('Toggle Theme'), icon: themeIcon, onClick: toggleTheme }]
+	}"
+	:sections="[
+		{
+			label: '',
+			items: [
+				{ label: __('Spaces'), icon: LucideRocket, to: { name: 'SpaceList' } },
+				{ label: __('Contributions'), icon: LucideGitBranch, to: { name: 'Contributions' } },
+			]
+		}
+	]"
+/>
 </template>
 
 <script setup>
 import { Sidebar } from "frappe-ui";
 
-import { onMounted, computed, ref } from "vue";
+import { onMounted, computed } from "vue";
 import { useStorage } from "@vueuse/core";
 import LucideMoon from "~icons/lucide/moon";
 import LucideSun from "~icons/lucide/sun";
 import LucideRocket from "~icons/lucide/rocket";
+import LucideGitBranch from "~icons/lucide/git-branch";
 
 const userTheme = useStorage("wiki-theme", "dark");
 

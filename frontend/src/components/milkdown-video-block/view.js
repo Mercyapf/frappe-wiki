@@ -16,38 +16,31 @@ import { videoBlockSchema } from './schema.js';
  * Creates a ProseMirror NodeView that renders the Vue component.
  */
 export const videoBlockView = $view(videoBlockSchema.node, (ctx) => {
-	// Get config from context, fallback to defaults
 	let config = defaultVideoBlockConfig;
 	try {
 		config = ctx.get(videoBlockConfig.key) || defaultVideoBlockConfig;
-	} catch (e) {
-		// Config context not available, use defaults
-	}
+	} catch (e) {}
 
 	return (initialNode, view, getPos) => {
 		const dom = document.createElement('div');
 		dom.className = 'milkdown-video-block-view';
 		dom.setAttribute('data-type', 'video-block');
 
-		// Track selection state and current node
 		let selected = false;
 		let currentNode = initialNode;
 
-		// Create reactive props
 		const props = shallowRef({
 			src: initialNode.attrs.src || '',
 			selected: false,
 			config: config,
 		});
 
-		// Use Vue's createApp for rendering
 		let app = null;
 		let mounted = false;
 
 		const mountComponent = () => {
 			if (mounted) return;
 
-			// Use Vue 3's render function approach
 			app = createApp({
 				render() {
 					return h(VideoBlockComponent, {
@@ -72,7 +65,6 @@ export const videoBlockView = $view(videoBlockSchema.node, (ctx) => {
 			mounted = true;
 		};
 
-		// Mount the component
 		mountComponent();
 
 		return {
@@ -86,7 +78,6 @@ export const videoBlockView = $view(videoBlockSchema.node, (ctx) => {
 					...props.value,
 					src: currentNode.attrs.src || '',
 				};
-				// Force re-render
 				if (app) {
 					app._instance?.proxy?.$forceUpdate?.();
 				}
@@ -110,7 +101,6 @@ export const videoBlockView = $view(videoBlockSchema.node, (ctx) => {
 				mounted = false;
 			},
 			stopEvent: (event) => {
-				// Allow clicks on the video controls
 				return event.target.tagName === 'VIDEO';
 			},
 			ignoreMutation: () => true,

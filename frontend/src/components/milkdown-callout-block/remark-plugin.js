@@ -48,31 +48,25 @@ export const remarkCalloutBlockPlugin = $remark(
 		visit(tree, 'paragraph', (node, index, parent) => {
 			if (!node.children || node.children.length === 0) return;
 
-			// Get the full text content of the paragraph
 			const textContent = getFullText(node);
 
-			// Try to match multiline callout pattern
 			let match = textContent.match(CALLOUT_BLOCK_REGEX);
 
 			if (!match) {
-				// Try inline pattern
 				match = textContent.match(CALLOUT_INLINE_REGEX);
 			}
 
 			if (match) {
 				const rawType = match[1].toLowerCase();
 
-				// Validate the type
 				if (!CALLOUT_TYPES.includes(rawType)) {
 					return;
 				}
 
 				const calloutType = rawType === 'warning' ? 'caution' : rawType;
-				// Remove escape backslashes from title (editor escapes special chars)
 				const title = (match[2] || '').replace(/\\/g, '');
 				const content = match[3] || '';
 
-				// Create the callout-block node
 				const calloutNode = {
 					type: 'callout-block',
 					calloutType: calloutType,
@@ -83,7 +77,6 @@ export const remarkCalloutBlockPlugin = $remark(
 					},
 				};
 
-				// Replace the paragraph with the callout node
 				if (parent && typeof index === 'number') {
 					parent.children.splice(index, 1, calloutNode);
 				}
@@ -101,7 +94,6 @@ function getFullText(node) {
 	}
 
 	if (node.type === 'break') {
-		// Handle <br> / soft breaks as newlines
 		return '\n';
 	}
 

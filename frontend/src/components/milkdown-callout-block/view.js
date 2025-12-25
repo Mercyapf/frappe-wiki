@@ -16,24 +16,19 @@ import { calloutBlockSchema } from './schema.js';
  * Creates a ProseMirror NodeView that renders the Vue component.
  */
 export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
-	// Get config from context, fallback to defaults
 	let config = defaultCalloutBlockConfig;
 	try {
 		config = ctx.get(calloutBlockConfig.key) || defaultCalloutBlockConfig;
-	} catch (e) {
-		// Config context not available, use defaults
-	}
+	} catch (e) {}
 
 	return (initialNode, view, getPos) => {
 		const dom = document.createElement('div');
 		dom.className = 'milkdown-callout-block-view';
 		dom.setAttribute('data-type', 'callout-block');
 
-		// Track selection state and current node
 		let selected = false;
 		let currentNode = initialNode;
 
-		// Create reactive props
 		const props = shallowRef({
 			type: initialNode.attrs.type || 'note',
 			title: initialNode.attrs.title || '',
@@ -42,7 +37,6 @@ export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
 			config: config,
 		});
 
-		// Helper to update node attributes
 		const updateNodeAttr = (attr, value) => {
 			if (typeof getPos === 'function') {
 				const pos = getPos();
@@ -57,14 +51,12 @@ export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
 			}
 		};
 
-		// Use Vue's createApp for rendering
 		let app = null;
 		let mounted = false;
 
 		const mountComponent = () => {
 			if (mounted) return;
 
-			// Use Vue 3's render function approach
 			app = createApp({
 				render() {
 					return h(CalloutBlockComponent, {
@@ -80,7 +72,6 @@ export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
 			mounted = true;
 		};
 
-		// Mount the component
 		mountComponent();
 
 		return {
@@ -96,7 +87,6 @@ export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
 					title: currentNode.attrs.title || '',
 					content: currentNode.attrs.content || '',
 				};
-				// Force re-render
 				if (app) {
 					app._instance?.proxy?.$forceUpdate?.();
 				}
@@ -120,7 +110,6 @@ export const calloutBlockView = $view(calloutBlockSchema.node, (ctx) => {
 				mounted = false;
 			},
 			stopEvent: (event) => {
-				// Allow interactions within the callout (like textarea editing)
 				return (
 					event.target.tagName === 'TEXTAREA' ||
 					event.target.tagName === 'INPUT'

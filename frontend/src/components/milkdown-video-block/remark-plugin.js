@@ -46,24 +46,20 @@ export const remarkVideoBlockPlugin = $remark(
 	'remarkVideoBlockPlugin',
 	() => () => (tree) => {
 		visit(tree, 'paragraph', (node, index, parent) => {
-			// Only process paragraphs with exactly one child
 			if (!node.children || node.children.length !== 1) {
 				return;
 			}
 
 			const firstChild = node.children[0];
 
-			// Check if the single child is an image
 			if (!firstChild || firstChild.type !== 'image') {
 				return;
 			}
 
-			// Check if it's a video URL - only transform videos here
 			if (!firstChild.url || !isVideoUrl(firstChild.url)) {
 				return;
 			}
 
-			// Replace the paragraph with a video-block node
 			const videoBlockNode = {
 				type: 'video-block',
 				url: firstChild.url,
@@ -74,7 +70,6 @@ export const remarkVideoBlockPlugin = $remark(
 				},
 			};
 
-			// Replace the paragraph node in the parent's children array
 			if (parent && typeof index === 'number') {
 				parent.children.splice(index, 1, videoBlockNode);
 			}
@@ -93,14 +88,12 @@ export const remarkMediaBlockPlugin = $remark(
 	'remarkMediaBlockPlugin',
 	() => () => (tree) => {
 		visit(tree, 'paragraph', (node, index, parent) => {
-			// Only process paragraphs with exactly one child
 			if (!node.children || node.children.length !== 1) {
 				return;
 			}
 
 			const firstChild = node.children[0];
 
-			// Check if the single child is an image
 			if (!firstChild || firstChild.type !== 'image') {
 				return;
 			}
@@ -112,7 +105,6 @@ export const remarkMediaBlockPlugin = $remark(
 			let newNode;
 
 			if (isVideoUrl(url)) {
-				// Create a video-block node for video URLs
 				newNode = {
 					type: 'video-block',
 					url: url,
@@ -123,8 +115,6 @@ export const remarkMediaBlockPlugin = $remark(
 					},
 				};
 			} else {
-				// Create an image-block node for image URLs
-				// This mirrors Milkdown's remarkImageBlockPlugin behavior
 				newNode = {
 					type: 'image-block',
 					url: url,
@@ -133,7 +123,6 @@ export const remarkMediaBlockPlugin = $remark(
 				};
 			}
 
-			// Replace the paragraph node in the parent's children array
 			if (parent && typeof index === 'number') {
 				parent.children.splice(index, 1, newNode);
 			}

@@ -29,16 +29,13 @@ export const calloutBlockSchema = $nodeSchema('callout-block', () => ({
 		{
 			tag: 'aside.callout',
 			getAttrs: (dom) => {
-				// Extract type from class like "callout callout-note"
 				const classList = dom.className.split(' ');
 				const typeClass = classList.find((c) => c.startsWith('callout-'));
 				const type = typeClass ? typeClass.replace('callout-', '') : 'note';
 
-				// Get title from .callout-title span
 				const titleEl = dom.querySelector('.callout-title span');
 				const title = titleEl ? titleEl.textContent : '';
 
-				// Get content from .callout-content
 				const contentEl = dom.querySelector('.callout-content');
 				const content = contentEl ? contentEl.textContent : '';
 
@@ -90,12 +87,6 @@ export const calloutBlockSchema = $nodeSchema('callout-block', () => ({
 			const title = node.attrs.title || '';
 			const content = node.attrs.content || '';
 
-			// Output Astro Starlight-style callout syntax
-			// :::type[title]
-			// content
-			// :::
-
-			// Build the callout markdown string
 			let markdown;
 			if (title) {
 				markdown = `:::${calloutType}[${title}]\n${content}\n:::`;
@@ -103,7 +94,6 @@ export const calloutBlockSchema = $nodeSchema('callout-block', () => ({
 				markdown = `:::${calloutType}\n${content}\n:::`;
 			}
 
-			// Output as a paragraph with text content
 			state.openNode('paragraph');
 			state.addNode('text', undefined, undefined, { value: markdown });
 			state.closeNode();
