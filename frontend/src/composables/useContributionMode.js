@@ -14,6 +14,18 @@ export function isWikiManager() {
 	);
 }
 
+export function canAccessWiki() {
+	const user = userResource.data;
+	if (!user || !user.roles) return false;
+
+	return user.roles.some(
+		(role) =>
+			role.role === 'Wiki User' ||
+			role.role === 'Wiki Manager' ||
+			role.role === 'System Manager',
+	);
+}
+
 export function shouldUseContributionMode() {
 	const user = userResource.data;
 	if (!user || !user.is_logged_in) return false;
