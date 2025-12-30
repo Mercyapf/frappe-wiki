@@ -129,7 +129,7 @@
    "label": "Show in switcher?"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "is_published",
    "fieldtype": "Check",
    "label": "Is Published?"
@@ -137,7 +137,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-30 16:14:53.271896",
+ "modified": "2025-12-30 16:24:07.774727",
  "modified_by": "Administrator",
  "module": "Wiki",
  "name": "Wiki Space",
