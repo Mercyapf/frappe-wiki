@@ -122,6 +122,23 @@ class WikiDocument(NestedSet):
 				frappe.PermissionError,
 			)
 
+	def check_published(self):
+		if not self.is_published:
+			frappe.throw(
+				frappe._("Page not found"),
+				frappe.DoesNotExistError,
+			)
+
+		space = self.get_wiki_space()
+		space_doc = None
+		if space:
+			space_doc = frappe.get_cached_doc("Wiki Space", space["name"])
+		if space_doc and not space_doc.is_published:
+			frappe.throw(
+				frappe._("Page not found"),
+				frappe.DoesNotExistError,
+			)
+
 	def get_tree_and_navigation(self) -> tuple[list, dict]:
 		"""
 		Get the wiki tree and adjacent documents for navigation.
@@ -178,6 +195,7 @@ class WikiDocument(NestedSet):
 	def get_web_context(self) -> dict:
 		"""Get all context needed to render this Wiki Document."""
 		self.check_guest_access()
+		self.check_published()
 		wiki_space = self.get_wiki_space()
 		wiki_space_doc = frappe.get_cached_doc("Wiki Space", wiki_space.name) if wiki_space else None
 		nested_tree, adjacent_docs = self.get_tree_and_navigation()

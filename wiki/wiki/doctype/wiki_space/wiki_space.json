@@ -16,6 +16,7 @@
   "favicon",
   "enable_feedback_collection",
   "show_in_switcher",
+  "is_published",
   "section_break_z5nn",
   "wiki_sidebars",
   "navbar_tab",
@@ -126,11 +127,17 @@
    "fieldtype": "Check",
    "in_standard_filter": 1,
    "label": "Show in switcher?"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Is Published?"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-29 12:55:08.888323",
+ "modified": "2025-12-30 16:14:53.271896",
  "modified_by": "Administrator",
  "module": "Wiki",
  "name": "Wiki Space",

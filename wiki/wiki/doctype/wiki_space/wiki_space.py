@@ -20,6 +20,7 @@ class WikiSpace(Document):
 		dark_mode_logo: DF.AttachImage | None
 		enable_feedback_collection: DF.Check
 		favicon: DF.AttachImage | None
+		is_published: DF.Check
 		light_mode_logo: DF.AttachImage | None
 		navbar_items: DF.Table[TopBarItem]
 		root_group: DF.Link | None
