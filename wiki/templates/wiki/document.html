@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block body %}
-<div x-data="{ ...wikiDocument(), ...tocScrollSpy() }" x-init="$store.navigation.init()">
+<div x-data="wikiPage" x-init="$store.navigation.init()">
     <!-- Main Content -->
     <article class="max-w-4xl mx-auto xl:mr-72 transition-opacity duration-150"
              :class="{ 'opacity-50': $store.navigation.loading }">
@@ -101,15 +101,15 @@
 </div>
 
 <script>
-    // Initialize page content store for reactive updates during navigation
+    // Initialize page content store and wikiPage component for reactive updates during navigation
     document.addEventListener('alpine:init', () => {
         Alpine.store('pageContent', {
             markdown: {{ raw_markdown | tojson }}
         });
-    });
 
-    function wikiDocument() {
-        return {
+        // Combined component for wiki document page (wikiDocument + tocScrollSpy)
+        Alpine.data('wikiPage', () => ({
+            // wikiDocument properties
             copied: false,
 
             get markdown() {
@@ -136,8 +136,126 @@
                     'perplexity': `https://www.perplexity.ai/search?q=${encodedContent}`
                 };
                 return urls[provider] || '#';
+            },
+
+            // tocScrollSpy properties
+            headings: [],
+            activeId: '',
+            observer: null,
+
+            init() {
+                this.extractHeadings('wiki-content');
+                this.setupScrollSpy();
+
+                // Register refresh callback with store
+                Alpine.store('toc').setRefreshCallback(() => {
+                    this.refresh();
+                });
+            },
+
+            refresh() {
+                // Disconnect existing observer
+                if (this.observer) {
+                    this.observer.disconnect();
+                }
+
+                // Re-extract headings and setup scroll spy
+                this.extractHeadings('wiki-content');
+                this.setupScrollSpy();
+            },
+
+            extractHeadings(contentId) {
+                const content = document.getElementById(contentId);
+                if (!content) return;
+
+                const headingElements = content.querySelectorAll('h2, h3');
+                this.headings = Array.from(headingElements).map((heading, index) => {
+                    // Ensure heading has an ID for linking
+                    if (!heading.id) {
+                        heading.id = `heading-${index}`;
+                    }
+                    // Get text before adding anchor
+                    const text = heading.textContent.trim();
+                    // Add anchor link if not already present
+                    this.addAnchorLink(heading);
+                    return {
+                        id: heading.id,
+                        text: text,
+                        level: parseInt(heading.tagName.charAt(1))
+                    };
+                });
+
+                // Set initial active heading
+                if (this.headings.length > 0) {
+                    this.activeId = this.headings[0].id;
+                } else {
+                    this.activeId = '';
+                }
+            },
+
+            setupScrollSpy() {
+                if (this.headings.length === 0) return;
+
+                const options = {
+                    root: null,
+                    rootMargin: '-80px 0px -70% 0px',
+                    threshold: 0
+                };
+
+                this.observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            this.activeId = entry.target.id;
+                        }
+                    });
+                }, options);
+
+                this.headings.forEach(heading => {
+                    const element = document.getElementById(heading.id);
+                    if (element) {
+                        this.observer.observe(element);
+                    }
+                });
+            },
+
+            scrollToHeading(id) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Update active immediately for better UX
+                    this.activeId = id;
+                    // Update URL hash without jumping
+                    history.pushState(null, null, `#${id}`);
+                }
+            },
+
+            addAnchorLink(heading) {
+                // Skip if anchor already exists
+                if (heading.querySelector('.heading-anchor')) return;
+
+                const anchor = document.createElement('a');
+                anchor.href = `#${heading.id}`;
+                anchor.className = 'heading-anchor';
+                anchor.setAttribute('aria-label', `Link to ${heading.textContent.trim()}`);
+                anchor.textContent = '#';
+
+                const self = this;
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    self.scrollToHeading(heading.id);
+                    // Copy URL to clipboard
+                    navigator.clipboard.writeText(window.location.origin + window.location.pathname + `#${heading.id}`);
+                });
+
+                heading.insertBefore(anchor, heading.firstChild);
+            },
+
+            destroy() {
+                if (this.observer) {
+                    this.observer.disconnect();
+                }
             }
-        }
-    }
+        }));
+    });
 </script>
 {% endblock %}
