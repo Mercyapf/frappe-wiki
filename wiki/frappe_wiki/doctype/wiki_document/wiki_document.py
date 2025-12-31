@@ -248,6 +248,9 @@ class WikiDocument(NestedSet):
 
 class WikiDocumentRenderer(BaseRenderer):
 	def can_render(self) -> bool:
+		if self.path == "wiki" or self.path.startswith("wiki/"):
+			return False
+
 		document = frappe.db.get_value(
 			"Wiki Document", {"route": self.path}, ["name", "is_group", "is_published"], as_dict=True
 		)
