@@ -139,6 +139,7 @@
 .prose h5,
 .prose h6 {
   position: relative;
+  scroll-margin-top: 5rem;
 }
 
 .prose .heading-anchor {
