@@ -101,13 +101,17 @@ export const SLASH_COMMANDS = [
 	},
 	{
 		title: 'Image',
-		description: 'Insert an image from URL',
+		description: 'Upload an image',
 		icon: 'image',
 		command: ({ editor, range }) => {
-			const url = window.prompt('Enter image URL:');
-			if (url) {
-				editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
-			}
+			// Delete the slash command text first
+			editor.chain().focus().deleteRange(range).run();
+			// Dispatch a custom event that WikiEditor will listen for
+			const event = new CustomEvent('wiki-editor-upload-image', {
+				bubbles: true,
+				detail: { editor },
+			});
+			document.dispatchEvent(event);
 		},
 	},
 	{

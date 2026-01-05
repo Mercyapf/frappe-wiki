@@ -1,21 +1,32 @@
 <template>
     <div class="wiki-editor-container">
         <div class="wiki-tiptap-editor" v-if="editor">
+            <WikiToolbar :editor="editor" @uploadImage="handleImageUpload" />
             <WikiBubbleMenu :editor="editor" />
             <EditorContent :editor="editor" />
         </div>
         <div v-else class="wiki-editor-loading">
             Loading editor...
         </div>
+
+        <!-- Hidden file input for slash command image upload -->
+        <input
+            ref="slashImageInput"
+            type="file"
+            accept="image/*"
+            class="hidden-file-input"
+            @change="handleSlashImageSelect"
+        />
+
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, createApp, h } from 'vue';
+import { onKeyStroke } from '@vueuse/core';
 import { Editor, EditorContent } from '@tiptap/vue-3';
 import { StarterKit } from '@tiptap/starter-kit';
 import { Markdown } from '@tiptap/markdown';
-import { Image } from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { TaskList, TaskItem } from '@tiptap/extension-list';
 import { Placeholder } from '@tiptap/extensions';
@@ -26,9 +37,13 @@ import { useFileUpload, toast } from 'frappe-ui';
 // Import custom extensions
 import { CalloutBlock } from './tiptap-extensions/callout-block.js';
 import { VideoBlock } from './tiptap-extensions/video-block.js';
+import { WikiLink } from './tiptap-extensions/link-extension.js';
+import { WikiImage } from './tiptap-extensions/image-extension.js';
 import { SlashCommands, filterCommands } from './tiptap-extensions/slash-commands.js';
 import SlashCommandsList from './tiptap-extensions/SlashCommandsList.vue';
 import WikiBubbleMenu from './tiptap-extensions/WikiBubbleMenu.vue';
+import WikiToolbar from './tiptap-extensions/WikiToolbar.vue';
+import LinkPopup from './tiptap-extensions/LinkPopup.vue';
 
 // Import tippy for slash command popup
 import tippy from 'tippy.js';
@@ -49,7 +64,7 @@ const emit = defineEmits(['save']);
 const hasUnsavedChanges = ref(false);
 const lastSavedContent = ref(props.content || '');
 
-const AUTOSAVE_DELAY = 1 * 60 * 1000; // 1 minute in ms
+const AUTOSAVE_DELAY = 10 * 1000;
 let autosaveTimer = null;
 
 // Create lowlight instance for syntax highlighting
@@ -60,6 +75,11 @@ const fileUploader = useFileUpload();
 
 // Editor instance
 const editor = ref(null);
+
+// Refs for file input and link popup
+const slashImageInput = ref(null);
+let linkPopupInstance = null;
+let linkPopupApp = null;
 
 /**
  * Upload file to Frappe and return the file URL
@@ -131,6 +151,109 @@ function handleDrop(_view, event) {
     }
 
     return true;
+}
+
+/**
+ * Handle image upload from toolbar
+ */
+async function handleImageUpload(file) {
+    try {
+        const url = await uploadFile(file);
+        if (editor.value) {
+            editor.value.chain().focus().setImage({ src: url }).run();
+        }
+    } catch (error) {
+        console.error('Failed to upload image:', error);
+    }
+}
+
+/**
+ * Handle image upload from slash command
+ */
+function handleSlashImageSelect(event) {
+    const file = event.target.files?.[0];
+    if (file) {
+        handleImageUpload(file);
+    }
+    // Reset input so same file can be selected again
+    event.target.value = '';
+}
+
+/**
+ * Handle slash command image upload event
+ */
+function handleSlashImageUploadEvent() {
+    slashImageInput.value?.click();
+}
+
+/**
+ * Show link popup at the given position
+ */
+function showLinkPopup({ editor: editorInstance, href, isNew, rect }) {
+    // Destroy existing popup if any
+    hideLinkPopup();
+
+    // Create container for the popup
+    const container = document.createElement('div');
+
+    // Create Vue app for LinkPopup
+    linkPopupApp = createApp({
+        render() {
+            return h(LinkPopup, {
+                href: href || '',
+                isNew,
+                onSave: (newHref) => {
+                    editorInstance.chain().focus().setLink({ href: newHref }).run();
+                    hideLinkPopup();
+                },
+                onRemove: () => {
+                    editorInstance.chain().focus().unsetLink().run();
+                    hideLinkPopup();
+                },
+                onCancel: () => {
+                    hideLinkPopup();
+                },
+            });
+        },
+    });
+    linkPopupApp.mount(container);
+
+    // Create tippy popup
+    linkPopupInstance = tippy(document.body, {
+        getReferenceClientRect: () => rect,
+        appendTo: () => document.body,
+        content: container,
+        showOnCreate: true,
+        interactive: true,
+        trigger: 'manual',
+        placement: 'bottom-start',
+        maxWidth: 'none',
+        theme: 'none',
+        arrow: false,
+        offset: [0, 8],
+        onHide: () => {
+            // Cleanup when tippy hides
+            if (linkPopupApp) {
+                linkPopupApp.unmount();
+                linkPopupApp = null;
+            }
+        },
+    })[0];
+}
+
+/**
+ * Hide link popup
+ */
+function hideLinkPopup() {
+    if (linkPopupInstance && !linkPopupInstance.state.isDestroyed) {
+        linkPopupInstance.destroy();
+    }
+    linkPopupInstance = null;
+
+    if (linkPopupApp) {
+        linkPopupApp.unmount();
+        linkPopupApp = null;
+    }
 }
 
 /**
@@ -265,16 +388,20 @@ function initEditor() {
         extensions: [
             StarterKit.configure({
                 codeBlock: false, // We use CodeBlockLowlight instead
-                // Configure Link (now included in StarterKit v3)
-                link: {
-                    openOnClick: false,
-                    HTMLAttributes: {
-                        rel: 'noopener noreferrer',
-                    },
+                // Disable StarterKit's link - we use our custom WikiLink
+                link: false,
+            }),
+            // Custom link extension with Cmd+K support
+            WikiLink.configure({
+                openOnClick: false,
+                HTMLAttributes: {
+                    rel: 'noopener noreferrer',
                 },
+                onOpenLinkEditor: showLinkPopup,
             }),
             Markdown,
-            Image.configure({
+            // Custom image extension with caption support
+            WikiImage.configure({
                 inline: false,
                 allowBase64: true,
             }),
@@ -390,11 +517,26 @@ defineExpose({
     hasUnsavedChanges,
 });
 
+// Keyboard shortcut: Cmd+S / Ctrl+S to save
+onKeyStroke('s', (e) => {
+    if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        saveToDB();
+    }
+});
+
 onMounted(() => {
     initEditor();
+    // Listen for slash command image upload events
+    document.addEventListener('wiki-editor-upload-image', handleSlashImageUploadEvent);
 });
 
 onUnmounted(() => {
+    // Remove event listener
+    document.removeEventListener('wiki-editor-upload-image', handleSlashImageUploadEvent);
+    // Hide any open link popup
+    hideLinkPopup();
+
     if (autosaveTimer) {
         clearTimeout(autosaveTimer);
     }
@@ -416,11 +558,17 @@ onUnmounted(() => {
     padding: 0;
 }
 
+/* Hidden file input */
+.hidden-file-input {
+    display: none;
+}
+
 /* Wiki Editor Container Styles */
 .wiki-editor-container {
     display: flex;
     flex-direction: column;
     height: 100%;
+    isolation: isolate; /* Create new stacking context to contain z-index */
 }
 
 .wiki-editor-loading {
@@ -437,6 +585,11 @@ onUnmounted(() => {
     min-height: 500px;
     background-color: var(--surface-white, #ffffff);
     position: relative;
+    margin-top: 1rem;
+    max-width: 100ch;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Editor Content Styles */
@@ -448,6 +601,8 @@ onUnmounted(() => {
     font-size: 1rem;
     line-height: 1.625;
     color: var(--ink-gray-9, #111827);
+    border: 1px solid var(--outline-gray-2, #e5e7eb);
+    border-radius: 0 0 0.5rem 0.5rem;
 }
 
 .wiki-editor-content:focus {

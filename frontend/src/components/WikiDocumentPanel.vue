@@ -30,14 +30,26 @@
 
                 <div class="flex items-center gap-2">
                     <Button
+                        v-if="wikiDoc.doc?.is_published"
+                        variant="outline"
+                        @click="openPage"
+                    >
+                        <template #prefix>
+                            <LucideExternalLink class="size-4" />
+                        </template>
+                        {{ __('View Page') }}
+                    </Button>
+                    <Button
                         :variant="isContributionMode ? 'subtle' : 'solid'"
                         :loading="isSaving"
                         @click="saveFromHeader"
                     >
-                        <template #prefix>
-                            <LucideSave class="size-4" />
-                        </template>
-                        {{ isContributionMode ? __('Save Draft') : __('Save') }}
+                        <span class="flex items-center gap-2">
+                            {{ isContributionMode ? __('Save Draft') : __('Save') }}
+                            <kbd v-if="!isContributionMode" class="inline-flex items-center gap-1 rounded bg-white/25 px-1.5 py-0.5 text-[11px] font-medium opacity-80">
+                                <span class="text-sm">{{ isMac ? '⌘' : 'Ctrl+' }}</span><span>S</span>
+                            </kbd>
+                        </span>
                     </Button>
                     <Dropdown :options="menuOptions">
                         <Button variant="outline">
@@ -69,9 +81,12 @@ import WikiEditor from './WikiEditor.vue';
 import WikiDocumentSettings from './WikiDocumentSettings.vue';
 import ContributionBanner from './ContributionBanner.vue';
 import { useContributionMode, useContribution, currentBatch } from '@/composables/useContributionMode';
-import LucideSave from '~icons/lucide/save';
 import LucideMoreVertical from '~icons/lucide/more-vertical';
 import LucideLock from '~icons/lucide/lock';
+import LucideExternalLink from '~icons/lucide/external-link';
+
+// Detect if user is on Mac for keyboard shortcut display
+const isMac = computed(() => /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent));
 
 const props = defineProps({
     pageId: {
@@ -178,14 +193,6 @@ const editorKey = computed(() => {
 const menuOptions = computed(() => {
     const options = [];
 
-    if (wikiDoc.doc?.is_published) {
-        options.push({
-            label: __('View Page'),
-            icon: 'external-link',
-            onClick: () => window.open(`/${wikiDoc.doc.route}`, '_blank'),
-        });
-    }
-
     if (!isContributionMode.value) {
         options.push({
             label: wikiDoc.doc?.is_published ? __('Unpublish') : __('Publish'),
@@ -225,6 +232,10 @@ function openSettingsDialog() {
 function onSettingsSaved() {
     wikiDoc.reload();
     emit('refresh');
+}
+
+function openPage() {
+    window.open(`/${wikiDoc.doc.route}`, '_blank');
 }
 
 function saveFromHeader() {

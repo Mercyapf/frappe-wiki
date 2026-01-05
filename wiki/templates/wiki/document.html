@@ -10,7 +10,7 @@
     <!-- Main Content -->
     <article class="mx-auto xl:mr-72 transition-all duration-300"
              :class="{ 'opacity-50': $store.navigation.loading }"
-             :style="$store.sidebar?.isCollapsed ? 'max-width: 72rem;' : 'max-width: 56rem;'">
+             :style="$store.sidebar?.isCollapsed ? 'max-width: 100ch;' : 'max-width: 80ch;'">
         <!-- Page Header -->
         <header class="mb-8 pb-4 border-b border-[var(--outline-gray-1)]">
             <h1 id="wiki-page-title" class="text-3xl font-bold text-[var(--ink-gray-9)] mb-4">{{ doc.title }}</h1>
@@ -49,7 +49,7 @@
 
         <!-- Page Content -->
         <div class="prose max-w-none" id="wiki-content">
-            {{ rendered_content }}
+            {{ rendered_content | safe }}
         </div>
 
         <!-- Previous/Next Navigation -->

@@ -2,7 +2,7 @@
     <BubbleMenu
         v-if="editor"
         :editor="editor"
-        :tippy-options="{ duration: 100, maxWidth: 'none' }"
+        :tippy-options="{ duration: 100, maxWidth: 'none', zIndex: 50 }"
         class="wiki-bubble-menu"
     >
         <div class="bubble-menu-buttons">
@@ -132,14 +132,8 @@ const props = defineProps({
 });
 
 function toggleLink() {
-    if (props.editor.isActive('link')) {
-        props.editor.chain().focus().unsetLink().run();
-    } else {
-        const url = window.prompt('Enter URL:');
-        if (url) {
-            props.editor.chain().focus().setLink({ href: url }).run();
-        }
-    }
+    // Use the openLinkEditor command from our custom link extension
+    props.editor.commands.openLinkEditor();
 }
 </script>
 

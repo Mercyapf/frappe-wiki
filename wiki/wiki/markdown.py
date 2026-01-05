@@ -46,45 +46,54 @@ CALLOUT_PATTERN = re.compile(
 )
 
 
-def _process_callout_match(match, md_instance):
-	"""Process a single callout match and return HTML."""
-	callout_type = match.group("type")
-	title = match.group("title")
-	content = match.group("content")
-
+def _generate_callout_html(callout_type, title, inner_html):
+	"""Generate HTML for a callout block."""
 	# Normalize warning to caution for consistency
 	if callout_type == "warning":
 		callout_type = "caution"
 
-	# Remove escape backslashes from title (editor escapes special chars like !)
-	if title:
-		title = title.replace("\\", "")
-
-	# Use default title if none provided
+	# Use default title if none provided or empty
 	if not title:
 		title = DEFAULT_TITLES.get(callout_type, callout_type.capitalize())
 
 	icon = CALLOUT_ICONS.get(callout_type, CALLOUT_ICONS["note"])
 
-	# Render the inner content as markdown
-	inner_html = md_instance(content.strip()) if content.strip() else ""
-
 	return (
 		f'<aside class="callout callout-{callout_type}">\n'
 		f'<div class="callout-title">{icon}<span>{title}</span></div>\n'
 		f'<div class="callout-content">{inner_html}</div>\n'
-		f"</aside>\n"
+		f"</aside>"
 	)
 
 
-def _preprocess_callouts(content, md_instance):
+def _process_callouts_with_placeholders(content):
 	"""
-	Pre-process callout blocks before main markdown parsing.
-	This handles the :::type[title] syntax and converts to HTML.
+	Replace callout blocks with placeholders, returning the modified content
+	and a list of callout data to be processed later.
 	"""
+	callouts = []
+	# Use HTML comment-like placeholder that won't be parsed as markdown
+	placeholder_prefix = "WIKICALLOUTPLACEHOLDER"
 
 	def replacer(match):
-		return _process_callout_match(match, md_instance)
+		callout_type = match.group("type")
+		title = match.group("title") or ""
+		inner_content = match.group("content")
+
+		# Remove escape backslashes from title (editor escapes special chars like !)
+		if title:
+			title = title.replace("\\", "")
+
+		idx = len(callouts)
+		callouts.append(
+			{
+				"type": callout_type,
+				"title": title,
+				"content": inner_content.strip(),
+			}
+		)
+		# Return placeholder - use format that won't be parsed as markdown
+		return f"\n\n{placeholder_prefix}{idx}END\n\n"
 
 	# Process callouts (may be nested, so we process iteratively)
 	prev_content = None
@@ -92,7 +101,58 @@ def _preprocess_callouts(content, md_instance):
 		prev_content = content
 		content = CALLOUT_PATTERN.sub(replacer, content)
 
-	return content
+	return content, callouts, placeholder_prefix
+
+
+def _replace_callout_placeholders(html, callouts, placeholder_prefix, md_instance):
+	"""Replace callout placeholders with actual HTML after markdown rendering."""
+	for idx, callout in enumerate(callouts):
+		placeholder = f"{placeholder_prefix}{idx}END"
+		# The placeholder might be wrapped in <p> tags, so handle both cases
+		inner_html = md_instance(callout["content"]) if callout["content"] else ""
+		callout_html = _generate_callout_html(callout["type"], callout["title"], inner_html)
+
+		# Replace placeholder (may be wrapped in <p> tags)
+		html = html.replace(f"<p>{placeholder}</p>", callout_html)
+		html = html.replace(placeholder, callout_html)
+
+	return html
+
+
+class WikiRenderer(mistune.HTMLRenderer):
+	"""Custom HTML renderer with image caption support."""
+
+	def image(self, text: str, url: str, title: str | None = None) -> str:
+		"""
+		Render images with figure/figcaption when alt text (caption) is present.
+
+		Args:
+		    text: Alt text / caption for the image
+		    url: Image URL
+		    title: Optional title attribute
+		"""
+		from mistune.renderers.html import escape_text, striptags
+
+		src = self.safe_url(url)
+		alt = escape_text(striptags(text))
+
+		# Build the img tag
+		img_tag = f'<img src="{src}" alt="{alt}"'
+		if title:
+			img_tag += f' title="{title}"'
+		img_tag += " />"
+
+		# If there's alt text, wrap in figure with figcaption
+		if alt:
+			return (
+				f'<figure class="wiki-image-figure">'
+				f"{img_tag}"
+				f'<figcaption class="wiki-image-caption">{alt}</figcaption>'
+				f"</figure>"
+			)
+
+		# No caption, just return the image
+		return img_tag
 
 
 def render_markdown(content: str) -> str:
@@ -108,8 +168,9 @@ def render_markdown(content: str) -> str:
 	if not content:
 		return ""
 
-	# Create a base Mistune markdown instance for rendering inner content
+	# Create a base Mistune markdown instance with custom renderer
 	md = mistune.create_markdown(
+		renderer=WikiRenderer(),
 		plugins=[
 			"strikethrough",
 			"footnotes",
@@ -119,8 +180,13 @@ def render_markdown(content: str) -> str:
 		escape=False,
 	)
 
-	# First, process callouts (they can contain markdown)
-	processed_content = _preprocess_callouts(content, md)
+	# Step 1: Extract callouts and replace with placeholders
+	processed_content, callouts, placeholder_prefix = _process_callouts_with_placeholders(content)
 
-	# Then render remaining markdown
-	return md(processed_content)
+	# Step 2: Render markdown (placeholders will be wrapped in <p> tags)
+	html = md(processed_content)
+
+	# Step 3: Replace placeholders with actual callout HTML
+	html = _replace_callout_placeholders(html, callouts, placeholder_prefix, md)
+
+	return html
