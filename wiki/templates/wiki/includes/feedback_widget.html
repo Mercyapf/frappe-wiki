@@ -1,5 +1,5 @@
 <!-- Feedback Widget -->
-<form x-data="feedbackWidget('{{ doc.name }}')" @submit.prevent="submit()" class="mt-8 pt-6 border-t border-[var(--outline-gray-1)]">
+<form x-data="feedbackWidget('{{ doc.name }}')" @submit.prevent="submit()" class="mt-8" :class="headings.length > 0 ? 'pt-6 border-t border-[var(--outline-gray-1)]' : ''">
     <p class="text-sm font-medium text-[var(--ink-gray-7)] mb-3">Was this page helpful?</p>
 
     <!-- Reaction Buttons (pill-shaped toggle group) -->

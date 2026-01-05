@@ -177,3 +177,173 @@
 .hljs-template-tag {
   color: #22863a;
 }
+
+/**
+ * GitHub Dark Theme for highlight.js
+ * Dark mode overrides for better contrast
+ */
+[data-theme="dark"] .hljs {
+  background: var(--surface-gray-2, #2b2b2b);
+  color: var(--ink-gray-9, #f8f8f8);
+}
+
+/* Comments */
+[data-theme="dark"] .hljs-comment,
+[data-theme="dark"] .hljs-quote {
+  color: #8b949e;
+  font-style: italic;
+}
+
+/* Keywords */
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-selector-tag {
+  color: #ff7b72;
+}
+
+/* Deletion (diff) */
+[data-theme="dark"] .hljs-deletion {
+  color: #ffa198;
+  background-color: rgba(248, 81, 73, 0.15);
+}
+
+/* Strings */
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-doctag {
+  color: #a5d6ff;
+}
+
+/* Addition (diff) */
+[data-theme="dark"] .hljs-addition {
+  color: #7ee787;
+  background-color: rgba(46, 160, 67, 0.15);
+}
+
+/* Numbers and literals */
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-literal {
+  color: #79c0ff;
+}
+
+/* Symbols and bullets */
+[data-theme="dark"] .hljs-symbol,
+[data-theme="dark"] .hljs-bullet {
+  color: #ffa657;
+}
+
+/* Functions */
+[data-theme="dark"] .hljs-function {
+  color: #d2a8ff;
+}
+
+/* Titles (function names, class names) */
+[data-theme="dark"] .hljs-title,
+[data-theme="dark"] .hljs-title.function_ {
+  color: #d2a8ff;
+  font-weight: 600;
+}
+
+/* Built-ins */
+[data-theme="dark"] .hljs-built_in {
+  color: #79c0ff;
+}
+
+/* Classes and types */
+[data-theme="dark"] .hljs-class .hljs-title,
+[data-theme="dark"] .hljs-title.class_,
+[data-theme="dark"] .hljs-type {
+  color: #7ee787;
+}
+
+/* Attributes */
+[data-theme="dark"] .hljs-attr {
+  color: #79c0ff;
+}
+
+/* Variables */
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-template-variable {
+  color: #ffa657;
+}
+
+/* Tag names (HTML/XML) */
+[data-theme="dark"] .hljs-name {
+  color: #7ee787;
+}
+
+/* Selectors (CSS) */
+[data-theme="dark"] .hljs-selector-id,
+[data-theme="dark"] .hljs-selector-class {
+  color: #d2a8ff;
+}
+
+/* Regex */
+[data-theme="dark"] .hljs-regexp {
+  color: #a5d6ff;
+}
+
+/* Links */
+[data-theme="dark"] .hljs-link {
+  color: #79c0ff;
+  text-decoration: underline;
+}
+
+/* Meta (preprocessor, shebang) */
+[data-theme="dark"] .hljs-meta {
+  color: #8b949e;
+}
+
+/* Operators */
+[data-theme="dark"] .hljs-operator {
+  color: #ff7b72;
+}
+
+/* Punctuation */
+[data-theme="dark"] .hljs-punctuation {
+  color: #c9d1d9;
+}
+
+/* Parameters */
+[data-theme="dark"] .hljs-params {
+  color: #c9d1d9;
+}
+
+/* Properties */
+[data-theme="dark"] .hljs-property {
+  color: #79c0ff;
+}
+
+/* Section headers */
+[data-theme="dark"] .hljs-section {
+  color: #79c0ff;
+  font-weight: bold;
+}
+
+/* Tags (generic) */
+[data-theme="dark"] .hljs-tag {
+  color: #7ee787;
+}
+
+/* Subst (template literals) */
+[data-theme="dark"] .hljs-subst {
+  color: #c9d1d9;
+}
+
+/* Formula */
+[data-theme="dark"] .hljs-formula {
+  background-color: rgba(110, 118, 129, 0.1);
+}
+
+/* Attribute values */
+[data-theme="dark"] .hljs-attribute {
+  color: #79c0ff;
+}
+
+/* Code (inline) */
+[data-theme="dark"] .hljs-code {
+  color: #ff7b72;
+}
+
+/* Template tags */
+[data-theme="dark"] .hljs-template-tag {
+  color: #7ee787;
+}

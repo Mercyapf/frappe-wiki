@@ -116,7 +116,7 @@ function finishEditing() {
 .callout-block-wrapper {
     margin: 1rem 0;
     padding: 1rem 1.25rem;
-    border-radius: 0.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
     border-left: 4px solid;
     position: relative;
     transition: all 0.2s ease;

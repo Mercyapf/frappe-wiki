@@ -1,5 +1,5 @@
 {% extends "templates/wiki/layout.html" %}
-{% from "templates/wiki/macros/buttons.html" import ghost_button, render_icon, dropdown, dropdown_item, dropdown_end %}
+{% from "templates/wiki/macros/buttons.html" import render_icon, page_actions_dropdown, page_action_item, dropdown_end %}
 
 {% block title %}
     {{ doc.title }}
@@ -12,38 +12,16 @@
              :class="{ 'opacity-50': $store.navigation.loading }"
              :style="$store.sidebar?.isCollapsed ? 'max-width: 100ch;' : 'max-width: 80ch;'">
         <!-- Page Header -->
-        <header class="mb-8 pb-4 border-b border-[var(--outline-gray-1)]">
-            <h1 id="wiki-page-title" class="text-3xl font-bold text-[var(--ink-gray-9)] mb-4">{{ doc.title }}</h1>
+        <header class="py-6 mb-8 border-b border-[var(--outline-gray-1)]">
+            <div class="flex items-start justify-between gap-4">
+                <h1 id="wiki-page-title" class="text-2xl font-bold text-[var(--ink-gray-9)]">{{ doc.title }}</h1>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <!-- Edit Page Link -->
-                {{ ghost_button(text="Edit Page", icon="edit", href=doc.get_edit_link(), id="wiki-edit-link") }}
-
-                <!-- Ask AI Dropdown -->
-                {% set ai_providers = [
-                    {"key": "claude", "text": "Ask Claude", "icon": "claude"},
-                    {"key": "openai", "text": "Ask OpenAI", "icon": "openai"},
-                    {"key": "t3", "text": "Ask T3 Chat", "icon": "t3"},
-                    {"key": "perplexity", "text": "Ask Perplexity", "icon": "perplexity"}
-                ] %}
-                {{ dropdown(text="Ask AI", icon="sparkles") }}
-                    {% for provider in ai_providers %}
-                        {{ dropdown_item(text=provider.text, icon=provider.icon, href_expr="getAIUrl('" ~ provider.key ~ "')") }}
-                    {% endfor %}
+                <!-- Page Actions Dropdown -->
+                {{ page_actions_dropdown(edit_href=doc.get_edit_link(), edit_text="Edit") }}
+                    {{ page_action_item(text="Copy page", description="Copy page as Markdown for LLMs", icon="clipboard", click="copyMarkdown(); open = false") }}
+                    {{ page_action_item(text="Open in ChatGPT", description="Ask ChatGPT about this page", icon="openai", href_expr="getAIUrl('openai')", target="_blank") }}
+                    {{ page_action_item(text="Open in Claude", description="Ask Claude about this page", icon="claude", href_expr="getAIUrl('claude')", target="_blank") }}
                 {{ dropdown_end() }}
-
-                <!-- Copy Markdown Button -->
-                <button @click="copyMarkdown()"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[var(--ink-gray-5)] hover:text-[var(--ink-gray-9)] hover:bg-[var(--surface-gray-2)] rounded-md transition-colors duration-200 cursor-pointer">
-                    <template x-if="!copied">
-                        {{ render_icon("clipboard") }}
-                    </template>
-                    <template x-if="copied">
-                        {{ render_icon("check", "text-[var(--ink-green-2)]") }}
-                    </template>
-                    <span x-text="copied ? 'Copied!' : 'Copy Markdown'"></span>
-                </button>
             </div>
         </header>
 
@@ -129,12 +107,14 @@
             },
 
             getAIUrl(provider) {
-                const encodedContent = encodeURIComponent(this.markdown);
+                const pageUrl = window.location.href;
+                const prompt = `I'm currently browsing this web page: ${pageUrl}\n\nPlease answer any questions I have based on the content of this page.`;
+                const encodedPrompt = encodeURIComponent(prompt);
                 const urls = {
-                    'claude': `https://claude.ai/new?q=${encodedContent}`,
-                    'openai': `https://chatgpt.com/?q=${encodedContent}`,
-                    't3': `https://t3.chat/new?q=${encodedContent}`,
-                    'perplexity': `https://www.perplexity.ai/search?q=${encodedContent}`
+                    'claude': `https://claude.ai/new?q=${encodedPrompt}`,
+                    'openai': `https://chatgpt.com/?q=${encodedPrompt}`,
+                    't3': `https://t3.chat/new?q=${encodedPrompt}`,
+                    'perplexity': `https://www.perplexity.ai/search?q=${encodedPrompt}`
                 };
                 return urls[provider] || '#';
             },
