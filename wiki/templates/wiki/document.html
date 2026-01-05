@@ -6,11 +6,10 @@
 {% endblock %}
 
 {% block body %}
-<div x-data="wikiPage" x-init="$store.navigation.init()">
+<div x-data="wikiPage" x-init="$store.navigation.init()" class="w-full min-w-0">
     <!-- Main Content -->
-    <article class="w-full xl:mr-72 transition-all duration-300"
-             :class="{ 'opacity-50': $store.navigation.loading }"
-             :style="$store.sidebar?.isCollapsed ? 'max-width: 100ch;' : 'max-width: 80ch;'">
+    <article class="w-full min-w-0 xl:mr-72 transition-all duration-300 xl:max-w-[80ch]"
+             :class="{ 'opacity-50': $store.navigation.loading, 'xl:!max-w-[100ch]': $store.sidebar?.isCollapsed }">
         <!-- Page Header -->
         <header class="py-6 mb-8">
             <div class="flex items-center justify-between gap-4">
