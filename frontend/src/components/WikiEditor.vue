@@ -66,6 +66,7 @@ const lastSavedContent = ref(props.content || '');
 
 const AUTOSAVE_DELAY = 10 * 1000;
 let autosaveTimer = null;
+let isSaving = false; // Flag to prevent watcher from resetting during save
 
 // Create lowlight instance for syntax highlighting
 const lowlight = createLowlight(common);
@@ -435,7 +436,7 @@ function initEditor() {
             handlePaste,
             handleDrop,
             attributes: {
-                class: 'wiki-editor-content',
+                class: 'prose max-w-none prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:p-0 prose-code:font-normal prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 wiki-editor-content',
             },
         },
         onUpdate: () => {
@@ -467,15 +468,25 @@ async function autoSave() {
         return;
     }
 
+    // Notify components to sync their content before we read it
+    document.dispatchEvent(new CustomEvent('wiki-editor-before-save'));
+
     const currentContent = editor.value.getMarkdown();
     if (currentContent === undefined || currentContent === lastSavedContent.value) {
         hasUnsavedChanges.value = false;
         return;
     }
 
+    isSaving = true;
     emit('save', currentContent);
     lastSavedContent.value = currentContent;
     hasUnsavedChanges.value = false;
+    // Reset flag after a tick to allow the watcher to see the updated props
+    setTimeout(() => {
+        isSaving = false;
+        // Notify components that save is complete so they can restore focus
+        document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
+    }, 100);
 }
 
 function saveToDB() {
@@ -489,21 +500,35 @@ function saveToDB() {
         return;
     }
 
+    // Notify components to sync their content before we read it
+    document.dispatchEvent(new CustomEvent('wiki-editor-before-save'));
+
     // Get markdown from the editor
     const markdown = editor.value.getMarkdown();
     if (markdown !== undefined) {
+        isSaving = true;
         emit('save', markdown);
         lastSavedContent.value = markdown;
         hasUnsavedChanges.value = false;
+        // Reset flag after a tick to allow the watcher to see the updated props
+        setTimeout(() => {
+            isSaving = false;
+            // Notify components that save is complete so they can restore focus
+            document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
+        }, 100);
     } else {
         toast.error('Could not get content from editor');
     }
 }
 
-// Watch for external content changes
+// Watch for external content changes (e.g., switching pages)
+// Skip during save to prevent resetting editor state and losing focus
 watch(
     () => props.content,
     (newContent) => {
+        if (isSaving) {
+            return;
+        }
         if (editor.value && newContent !== editor.value.getMarkdown()) {
             editor.value.commands.setContent(newContent || '', { contentType: 'markdown' });
             lastSavedContent.value = newContent || '';
@@ -813,6 +838,24 @@ onUnmounted(() => {
     max-width: 100%;
     height: auto;
     border-radius: 0.375rem;
+}
+
+/* Image caption styling using img + em pattern
+   Usage in markdown:
+   ![alt text](image.jpg)
+   *caption text*
+   (no blank line between image and caption)
+*/
+.wiki-editor-content img:has(+ em) {
+    margin-bottom: 0;
+}
+
+.wiki-editor-content img + em {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--ink-gray-6, #4b5563);
+    text-align: center;
 }
 
 /* Selected node */

@@ -249,7 +249,7 @@ This is a note
 :::"""
 		html = render_markdown(md)
 		self.assertIn('class="callout callout-note"', html)
-		self.assertIn("<span>Note</span>", html)
+		self.assertIn('<span class="callout-title">Note</span>', html)
 		self.assertIn("This is a note", html)
 
 	def test_tip_callout(self):
@@ -259,7 +259,7 @@ This is a tip
 :::"""
 		html = render_markdown(md)
 		self.assertIn('class="callout callout-tip"', html)
-		self.assertIn("<span>Tip</span>", html)
+		self.assertIn('<span class="callout-title">Tip</span>', html)
 
 	def test_caution_callout(self):
 		"""Test :::caution callout"""
@@ -268,7 +268,7 @@ This is a caution
 :::"""
 		html = render_markdown(md)
 		self.assertIn('class="callout callout-caution"', html)
-		self.assertIn("<span>Caution</span>", html)
+		self.assertIn('<span class="callout-title">Caution</span>', html)
 
 	def test_danger_callout(self):
 		"""Test :::danger callout"""
@@ -277,7 +277,7 @@ This is dangerous
 :::"""
 		html = render_markdown(md)
 		self.assertIn('class="callout callout-danger"', html)
-		self.assertIn("<span>Danger</span>", html)
+		self.assertIn('<span class="callout-title">Danger</span>', html)
 
 	def test_warning_alias_for_caution(self):
 		"""Test :::warning is aliased to caution"""
@@ -295,7 +295,7 @@ This is a tip with a custom title
 :::"""
 		html = render_markdown(md)
 		self.assertIn('class="callout callout-tip"', html)
-		self.assertIn("<span>Did you know?</span>", html)
+		self.assertIn('<span class="callout-title">Did you know?</span>', html)
 
 	def test_callout_with_markdown_content(self):
 		"""Test callout with markdown formatting inside"""

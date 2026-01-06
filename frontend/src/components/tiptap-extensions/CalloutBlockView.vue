@@ -6,7 +6,7 @@
  * Supports types: note, tip, caution, danger
  */
 
-import { computed, ref, nextTick, watch } from 'vue';
+import { computed, ref, nextTick, watch, onMounted, onUnmounted } from 'vue';
 import { NodeViewWrapper } from '@tiptap/vue-3';
 
 const props = defineProps({
@@ -57,6 +57,7 @@ const icon = computed(() => icons[normalizedType.value] || icons.note);
 const isEditingContent = ref(false);
 const editableContent = ref(props.node.attrs.content || '');
 const textareaRef = ref(null);
+let isSaving = false;
 
 // Watch for external changes
 watch(
@@ -79,11 +80,55 @@ function startEditing() {
 }
 
 function finishEditing() {
+    // Don't exit edit mode if we're in a save operation
+    if (isSaving) {
+        return;
+    }
     isEditingContent.value = false;
+    syncContent();
+}
+
+function syncContent() {
     if (editableContent.value !== props.node.attrs.content) {
         props.updateAttributes({ content: editableContent.value });
     }
 }
+
+// Sync content before save so pending edits are not lost
+function handleBeforeSave() {
+    if (isEditingContent.value) {
+        isSaving = true;
+        syncContent();
+    }
+}
+
+// Re-focus textarea after save completes
+function handleAfterSave() {
+    if (isSaving) {
+        isSaving = false;
+        // Re-focus the textarea after save
+        nextTick(() => {
+            if (textareaRef.value) {
+                textareaRef.value.focus();
+            }
+        });
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('wiki-editor-before-save', handleBeforeSave);
+    document.addEventListener('wiki-editor-after-save', handleAfterSave);
+
+    // Auto-enter edit mode for new callouts (empty content)
+    if (!props.node.attrs.content) {
+        startEditing();
+    }
+});
+
+onUnmounted(() => {
+    document.removeEventListener('wiki-editor-before-save', handleBeforeSave);
+    document.removeEventListener('wiki-editor-after-save', handleAfterSave);
+});
 </script>
 
 <template>
@@ -92,34 +137,37 @@ function finishEditing() {
         :class="[`callout-${normalizedType}`, { 'is-selected': selected }]"
         contenteditable="false"
     >
-        <div class="callout-title">
-            <span class="callout-icon" v-html="icon"></span>
+        <span class="callout-icon" v-html="icon"></span>
+        <div class="callout-body">
             <span class="callout-title-text">{{ displayTitle }}</span>
-        </div>
-        <div class="callout-content" @dblclick="startEditing">
-            <textarea
-                v-if="isEditingContent"
-                ref="textareaRef"
-                v-model="editableContent"
-                class="callout-content-editor"
-                @blur="finishEditing"
-                @keydown.escape="finishEditing"
-            ></textarea>
-            <div v-else class="callout-content-text">
-                {{ node.attrs.content || 'Double-click to edit...' }}
+            <div class="callout-content" @dblclick="startEditing">
+                <textarea
+                    v-if="isEditingContent"
+                    ref="textareaRef"
+                    v-model="editableContent"
+                    class="callout-content-editor"
+                    @blur="finishEditing"
+                    @keydown.escape="finishEditing"
+                ></textarea>
+                <div v-else class="callout-content-text">
+                    {{ node.attrs.content || 'Double-click to edit...' }}
+                </div>
             </div>
         </div>
     </NodeViewWrapper>
 </template>
 
 <style scoped>
+/* Frappe UI Alert-style callouts */
 .callout-block-wrapper {
     margin: 1rem 0;
-    padding: 1rem 1.25rem;
-    border-radius: 0 0.5rem 0.5rem 0;
-    border-left: 4px solid;
+    padding: 0.875rem 1rem;
+    border-radius: 0.375rem;
     position: relative;
-    transition: all 0.2s ease;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
 }
 
 /* Remove the selected outline - it's distracting when editing */
@@ -127,40 +175,39 @@ function finishEditing() {
     outline: none;
 }
 
-.callout-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-}
-
 .callout-icon {
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    padding-top: 0.125rem;
 }
 
 .callout-icon :deep(svg) {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1rem;
+    height: 1rem;
+}
+
+.callout-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .callout-title-text {
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    font-size: 0.8125rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--ink-gray-9, #111827);
 }
 
 .callout-content {
-    font-size: 0.9375rem;
-    line-height: 1.625;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .callout-content-text {
     white-space: pre-wrap;
+    color: var(--ink-gray-6, #6b7280);
 }
 
 .callout-content-editor {
@@ -184,43 +231,39 @@ function finishEditing() {
     box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.25);
 }
 
-/* Note - Blue */
+/* Note - Blue (info style) */
 .callout-note {
-    background-color: var(--surface-blue-1, #eff6ff);
-    border-color: var(--ink-blue-2, #3b82f6);
+    background-color: var(--surface-blue-2, #dbeafe);
 }
 
-.callout-note .callout-title {
+.callout-note .callout-icon {
     color: var(--ink-blue-3, #2563eb);
 }
 
-/* Tip - Green */
+/* Tip - Green (success style) */
 .callout-tip {
-    background-color: var(--surface-green-1, #f0fdf4);
-    border-color: var(--ink-green-2, #22c55e);
+    background-color: var(--surface-green-2, #dcfce7);
 }
 
-.callout-tip .callout-title {
+.callout-tip .callout-icon {
     color: var(--ink-green-3, #16a34a);
 }
 
-/* Caution - Amber */
+/* Caution - Amber (warning style) */
 .callout-caution {
-    background-color: var(--surface-amber-1, #fffbeb);
-    border-color: var(--ink-amber-2, #f59e0b);
+    background-color: var(--surface-amber-2, #fef3c7);
 }
 
-.callout-caution .callout-title {
+.callout-caution .callout-icon {
     color: var(--ink-amber-3, #d97706);
 }
 
-/* Danger - Red */
+/* Danger - Red (error style) */
 .callout-danger {
-    background-color: var(--surface-red-1, #fef2f2);
-    border-color: var(--ink-red-3, #dc2626);
+    background-color: var(--surface-red-2, #fecaca);
 }
 
-.callout-danger .callout-title {
-    color: var(--ink-red-4, #b91c1c);
+.callout-danger .callout-icon {
+    color: var(--ink-red-3, #dc2626);
 }
 </style>

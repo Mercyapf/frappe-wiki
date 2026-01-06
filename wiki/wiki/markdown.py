@@ -61,8 +61,11 @@ def _generate_callout_html(callout_type, title, inner_html):
 
 	return (
 		f'<aside class="callout callout-{callout_type}">\n'
-		f'<div class="callout-title">{icon}<span>{title}</span></div>\n'
+		f'<span class="callout-icon">{icon}</span>\n'
+		f'<div class="callout-body">\n'
+		f'<span class="callout-title">{title}</span>\n'
 		f'<div class="callout-content">{inner_html}</div>\n'
+		f"</div>\n"
 		f"</aside>"
 	)
 
