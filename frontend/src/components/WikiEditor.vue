@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, createApp, h } from 'vue';
+import { ref, onMounted, onUnmounted, createApp, h } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import { Editor, EditorContent } from '@tiptap/vue-3';
 import { StarterKit } from '@tiptap/starter-kit';
@@ -66,7 +66,6 @@ const lastSavedContent = ref(props.content || '');
 
 const AUTOSAVE_DELAY = 10 * 1000;
 let autosaveTimer = null;
-let isSaving = false; // Flag to prevent watcher from resetting during save
 
 // Create lowlight instance for syntax highlighting
 const lowlight = createLowlight(common);
@@ -477,16 +476,11 @@ async function autoSave() {
         return;
     }
 
-    isSaving = true;
     emit('save', currentContent);
     lastSavedContent.value = currentContent;
     hasUnsavedChanges.value = false;
-    // Reset flag after a tick to allow the watcher to see the updated props
-    setTimeout(() => {
-        isSaving = false;
-        // Notify components that save is complete so they can restore focus
-        document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
-    }, 100);
+    // Notify components that save is complete so they can restore focus
+    document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
 }
 
 function saveToDB() {
@@ -506,35 +500,15 @@ function saveToDB() {
     // Get markdown from the editor
     const markdown = editor.value.getMarkdown();
     if (markdown !== undefined) {
-        isSaving = true;
         emit('save', markdown);
         lastSavedContent.value = markdown;
         hasUnsavedChanges.value = false;
-        // Reset flag after a tick to allow the watcher to see the updated props
-        setTimeout(() => {
-            isSaving = false;
-            // Notify components that save is complete so they can restore focus
-            document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
-        }, 100);
+        // Notify components that save is complete so they can restore focus
+        document.dispatchEvent(new CustomEvent('wiki-editor-after-save'));
     } else {
         toast.error('Could not get content from editor');
     }
 }
-
-// Watch for external content changes (e.g., switching pages)
-// Skip during save to prevent resetting editor state and losing focus
-watch(
-    () => props.content,
-    (newContent) => {
-        if (isSaving) {
-            return;
-        }
-        if (editor.value && newContent !== editor.value.getMarkdown()) {
-            editor.value.commands.setContent(newContent || '', { contentType: 'markdown' });
-            lastSavedContent.value = newContent || '';
-        }
-    }
-);
 
 // Expose methods for parent component
 defineExpose({

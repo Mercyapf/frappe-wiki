@@ -186,8 +186,7 @@ const isSaving = computed(() => {
 
 const editorKey = computed(() => {
     if (wikiDoc.doc?.name === props.pageId) {
-        const contribMod = currentPageContribution.value?.modified || '';
-        return `${props.pageId}-${wikiDoc.doc.modified || 'new'}-${contribMod}`;
+        return props.pageId;
     }
     return null;
 });
