@@ -17,7 +17,7 @@ def check_app_permission():
 		return True
 
 	roles = frappe.get_roles()
-	if "Wiki Approver" in roles:
+	if "Wiki Manager" in roles:
 		return True
 
 	return False

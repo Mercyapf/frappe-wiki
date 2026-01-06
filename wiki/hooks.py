@@ -12,7 +12,7 @@ add_to_apps_screen = [
 		"name": "wiki",
 		"logo": "/assets/wiki/images/wiki-logo.png",
 		"title": "Wiki",
-		"route": "/app/wiki",
+		"route": "/wiki",
 		"has_permission": "wiki.utils.check_app_permission",
 	}
 ]
