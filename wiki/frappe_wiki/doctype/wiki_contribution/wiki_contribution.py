@@ -195,7 +195,14 @@ class WikiContribution(Document):
 
 	def _apply_delete(self):
 		"""Delete a Wiki Document and its children."""
-		doc = frappe.get_doc("Wiki Document", self.target_document)
+		target = self.target_document
+
+		# Clear the target_document link in this contribution before deleting
+		# to avoid LinkExistsError
+		frappe.db.set_value("Wiki Contribution", self.name, "target_document", None)
+		self.target_document = None
+
+		doc = frappe.get_doc("Wiki Document", target)
 		doc.delete_with_children()
 
 	def _apply_move(self, temp_to_real: dict):
