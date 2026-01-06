@@ -14,7 +14,7 @@
 {% block body %}
 <div x-data="wikiPage" x-init="$store.navigation.init()" class="w-full min-w-0 xl:pr-72">
     <!-- Main Content -->
-    <article class="w-full min-w-0 transition-all duration-300 xl:max-w-[80ch] mx-auto"
+    <article class="w-full min-w-0 transition-[max-width,opacity] duration-300 xl:max-w-[80ch] mx-auto"
              :class="{ 'opacity-50': $store.navigation.loading, 'xl:!max-w-[100ch]': $store.sidebar?.isCollapsed }">
         <!-- Page Header -->
         <header class="py-6 mb-8">
@@ -53,11 +53,11 @@
                 <a href="/{{ prev_doc.route }}"
                    @click.prevent="$store.navigation.navigateTo('{{ prev_doc.route }}')"
                    @mouseenter="$store.navigation.prefetch('{{ prev_doc.route }}')"
-                   class="group sm:flex-1 flex items-center gap-3 p-4 rounded-lg border border-[var(--outline-gray-1)] hover:border-[var(--outline-gray-2)] hover:bg-[var(--surface-gray-1)] transition-all duration-200 no-underline sm:max-w-[50%] overflow-hidden">
-                    {{ render_icon("chevron-left", "w-5 h-5 text-[var(--ink-gray-4)] group-hover:text-[var(--ink-gray-6)] transition-colors shrink-0") }}
+                   class="group sm:flex-1 flex items-center gap-3 p-4 rounded-lg border border-[var(--outline-gray-1)] hover:border-[var(--outline-gray-2)] hover:bg-[var(--surface-gray-1)] transition-colors duration-200 no-underline sm:max-w-[50%] overflow-hidden">
+                    {{ render_icon("chevron-left", "w-5 h-5 text-[var(--ink-gray-4)] group-hover:text-[var(--ink-gray-6)] transition-colors duration-200 shrink-0") }}
                     <div class="flex flex-col min-w-0">
                         <span class="text-xs font-medium text-[var(--ink-gray-4)] uppercase tracking-wide">Previous Page</span>
-                        <span class="text-sm font-medium text-[var(--ink-gray-7)] group-hover:text-[var(--ink-gray-9)] transition-colors sm:truncate">{{ prev_doc.title }}</span>
+                        <span class="text-sm font-medium text-[var(--ink-gray-7)] group-hover:text-[var(--ink-gray-9)] transition-colors duration-200 sm:truncate">{{ prev_doc.title }}</span>
                     </div>
                 </a>
                 {% endif %}
@@ -66,12 +66,12 @@
                 <a href="/{{ next_doc.route }}"
                    @click.prevent="$store.navigation.navigateTo('{{ next_doc.route }}')"
                    @mouseenter="$store.navigation.prefetch('{{ next_doc.route }}')"
-                   class="group sm:flex-1 flex items-center gap-3 p-4 rounded-lg border border-[var(--outline-gray-1)] hover:border-[var(--outline-gray-2)] hover:bg-[var(--surface-gray-1)] transition-all duration-200 no-underline sm:max-w-[50%] overflow-hidden {{ 'sm:ml-auto' if not prev_doc else '' }}">
+                   class="group sm:flex-1 flex items-center gap-3 p-4 rounded-lg border border-[var(--outline-gray-1)] hover:border-[var(--outline-gray-2)] hover:bg-[var(--surface-gray-1)] transition-colors duration-200 no-underline sm:max-w-[50%] overflow-hidden {{ 'sm:ml-auto' if not prev_doc else '' }}">
                     <div class="flex flex-col items-end min-w-0 ml-auto">
                         <span class="text-xs font-medium text-[var(--ink-gray-4)] uppercase tracking-wide">Next Page</span>
-                        <span class="text-sm font-medium text-[var(--ink-gray-7)] group-hover:text-[var(--ink-gray-9)] transition-colors sm:truncate text-right">{{ next_doc.title }}</span>
+                        <span class="text-sm font-medium text-[var(--ink-gray-7)] group-hover:text-[var(--ink-gray-9)] transition-colors duration-200 sm:truncate text-right">{{ next_doc.title }}</span>
                     </div>
-                    {{ render_icon("chevron-right", "w-5 h-5 text-[var(--ink-gray-4)] group-hover:text-[var(--ink-gray-6)] transition-colors shrink-0") }}
+                    {{ render_icon("chevron-right", "w-5 h-5 text-[var(--ink-gray-4)] group-hover:text-[var(--ink-gray-6)] transition-colors duration-200 shrink-0") }}
                 </a>
                 {% endif %}
             </div>

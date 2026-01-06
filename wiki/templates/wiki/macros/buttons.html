@@ -99,7 +99,7 @@
 {% macro dropdown_item(text="", icon="", href="", href_expr="", target="_blank") %}
     <a {% if href_expr %}:href="{{ href_expr }}"{% else %}href="{{ href }}"{% endif %}
        {% if target %}target="{{ target }}"{% endif %}
-       class="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--ink-gray-7)] hover:bg-[var(--surface-gray-2)] hover:text-[var(--ink-gray-9)] transition-colors duration-150">
+       class="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--ink-gray-7)] hover:bg-[var(--surface-gray-2)] hover:text-[var(--ink-gray-9)] transition-colors duration-200">
         {% if icon %}{{ render_icon(icon) }}{% endif %}
         <span>{{ text }}</span>
     </a>
@@ -162,7 +162,7 @@
 {% macro page_action_item(text="", description="", icon="", href="", href_expr="", click="", target="") %}
     {% if click %}
     <button @click="{{ click }}"
-            class="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--surface-gray-1)] transition-colors duration-150 cursor-pointer">
+            class="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--surface-gray-1)] transition-colors duration-200 cursor-pointer">
         {% if icon %}
         <span class="flex-shrink-0 mt-0.5">{{ render_icon(icon, "w-5 h-5 text-[var(--ink-gray-5)]") }}</span>
         {% endif %}
@@ -176,7 +176,7 @@
     {% else %}
     <a {% if href_expr %}:href="{{ href_expr }}"{% else %}href="{{ href }}"{% endif %}
        {% if target %}target="{{ target }}" rel="noopener noreferrer"{% endif %}
-       class="flex items-start gap-3 px-4 py-3 hover:bg-[var(--surface-gray-1)] transition-colors duration-150">
+       class="flex items-start gap-3 px-4 py-3 hover:bg-[var(--surface-gray-1)] transition-colors duration-200">
         {% if icon %}
         <span class="flex-shrink-0 mt-0.5">{{ render_icon(icon, "w-5 h-5 text-[var(--ink-gray-5)]") }}</span>
         {% endif %}
