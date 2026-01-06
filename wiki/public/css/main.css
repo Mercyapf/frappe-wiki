@@ -9,6 +9,8 @@
 
 /* Prose styling with Frappe theme variables */
 .prose {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
   --tw-prose-body: var(--ink-gray-8);
   --tw-prose-headings: var(--ink-gray-9);
   --tw-prose-lead: var(--ink-gray-6);
@@ -32,6 +34,7 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s ease;
+  word-break: break-all;
 }
 
 .prose a:hover {
