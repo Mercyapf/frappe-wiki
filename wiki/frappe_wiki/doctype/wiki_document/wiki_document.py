@@ -270,6 +270,7 @@ class WikiDocument(NestedSet):
 			"wiki_space": wiki_space_doc,
 			"wiki_spaces_for_switcher": wiki_spaces_for_switcher,
 			"navbar_items": navbar_items,
+			"favicon": wiki_space_doc.favicon if wiki_space_doc else None,
 			"rendered_content": content_html,
 			"raw_markdown": self.content or "",
 			"nested_tree": nested_tree,

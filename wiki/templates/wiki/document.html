@@ -5,6 +5,12 @@
     {{ doc.title }}
 {% endblock %}
 
+{% block head %}
+{% if favicon %}
+<link rel="icon" href="{{ favicon }}">
+{% endif %}
+{% endblock %}
+
 {% block body %}
 <div x-data="wikiPage" x-init="$store.navigation.init()" class="w-full min-w-0 xl:pr-72">
     <!-- Main Content -->
