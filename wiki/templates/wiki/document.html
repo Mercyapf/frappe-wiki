@@ -6,9 +6,7 @@
 {% endblock %}
 
 {% block head %}
-{% if favicon %}
-<link rel="icon" href="{{ favicon }}">
-{% endif %}
+<link rel="icon" href="{{ favicon or '/assets/wiki/favicon.png' }}">
 {% endblock %}
 
 {% block body %}
