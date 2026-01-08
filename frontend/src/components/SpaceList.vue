@@ -30,7 +30,18 @@
         },
       }"
       row-key="name"
-    />
+    >
+      <template #cell="{ item, column }">
+        <Badge
+          v-if="column.key === 'is_published'"
+          variant="subtle"
+          :theme="item ? 'green' : 'orange'"
+          size="sm"
+          :label="item ? __('Published') : __('Unpublished')"
+        />
+        <span v-else>{{ item }}</span>
+      </template>
+    </ListView>
 
     <Dialog
       v-model="showCreateDialog"
@@ -81,6 +92,7 @@ import {
   Dialog,
   FormControl,
   ErrorMessage,
+  Badge,
   toast
 } from "frappe-ui";
 import LucidePlus from "~icons/lucide/plus";
@@ -129,6 +141,11 @@ const columns = [
     width: 2,
   },
   {
+    label: __("Status"),
+    key: "is_published",
+    width: 1,
+  },
+  {
     label: __("Route"),
     key: "route",
     width: 2,
@@ -137,7 +154,7 @@ const columns = [
 
 const spaces = createListResource({
   doctype: "Wiki Space",
-  fields: ["name", "space_name", "route", "root_group"],
+  fields: ["name", "space_name", "route", "root_group", "is_published"],
   orderBy: "creation desc",
   limit: 100,
   auto: true,
