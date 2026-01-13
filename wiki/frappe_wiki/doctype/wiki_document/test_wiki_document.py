@@ -238,6 +238,40 @@ class TestGetWebContext(IntegrationTestCase):
 		# At least our 2 visible test spaces should be included
 		self.assertGreaterEqual(len(switcher_spaces), 2)
 
+	def test_orphan_document_without_wiki_space(self):
+		"""
+		Test that get_web_context handles a document that is not associated
+		with any Wiki Space (no parent, standalone published document).
+		"""
+		# Create a standalone document with no parent and no wiki space
+		orphan_doc = self._create_wiki_document(
+			"Orphan Published Document",
+			parent=None,
+			is_group=False,
+			is_published=True,
+		)
+
+		# Get context for the orphan document
+		orphan_doc.reload()
+		context = orphan_doc.get_web_context()
+
+		# The document should still return a valid context
+		# Even without a wiki space, these should be handled gracefully
+		self.assertIsNone(context.get("prev_doc"))
+		self.assertIsNone(context.get("next_doc"))
+		self.assertIsNone(context.get("wiki_space"))
+		self.assertEqual(context.get("wiki_spaces_for_switcher"), [])
+		self.assertEqual(context.get("navbar_items"), [])
+		self.assertEqual(context.get("nested_tree"), [])
+		self.assertIsNone(context.get("favicon"))
+
+		# hide_chrome should be True to hide sidebar, search, navbar
+		self.assertTrue(context.get("hide_chrome"))
+
+		# Content should still be rendered
+		self.assertIsNotNone(context.get("rendered_content"))
+		self.assertEqual(context.get("title"), "Orphan Published Document")
+
 	def test_wiki_spaces_for_switcher_ordered_by_switcher_order_then_name(self):
 		"""
 		Test that wiki_spaces_for_switcher is ordered by switcher_order first,

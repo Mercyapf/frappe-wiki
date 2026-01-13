@@ -247,39 +247,53 @@ class WikiDocument(NestedSet):
 		self.check_guest_access()
 		self.check_published()
 		wiki_space = self.get_wiki_space()
-		wiki_space_doc = frappe.get_cached_doc("Wiki Space", wiki_space.name) if wiki_space else None
-		nested_tree, adjacent_docs = self.get_tree_and_navigation()
-		content_html = render_markdown(self.content)
 
-		wiki_spaces_for_switcher = frappe.get_all(
-			"Wiki Space",
-			fields=["name", "space_name", "route", "light_mode_logo", "app_switcher_logo"],
-			or_filters={"show_in_switcher": 1, "name": wiki_space.name},
-			order_by="switcher_order asc, space_name asc",
-		)
-
-		# Process navbar items with icon detection
-		navbar_items = []
-		if wiki_space_doc and wiki_space_doc.navbar_items:
-			navbar_items = process_navbar_items(wiki_space_doc.navbar_items)
-
-		return {
+		# Base context with defaults for orphan documents
+		context = {
 			"doc": self,
 			"title": self.title,
 			"route": self.route,
-			"wiki_space": wiki_space_doc,
-			"wiki_spaces_for_switcher": wiki_spaces_for_switcher,
-			"navbar_items": navbar_items,
-			"favicon": wiki_space_doc.favicon if wiki_space_doc else None,
-			"rendered_content": content_html,
+			"wiki_space": None,
+			"wiki_spaces_for_switcher": [],
+			"navbar_items": [],
+			"favicon": None,
+			"rendered_content": render_markdown(self.content or ""),
 			"raw_markdown": self.content or "",
-			"nested_tree": nested_tree,
-			"prev_doc": adjacent_docs["prev"],
-			"next_doc": adjacent_docs["next"],
+			"nested_tree": [],
+			"prev_doc": None,
+			"next_doc": None,
 			"edit_link": self.get_edit_link(),
 			"last_updated": pretty_date(self.modified),
 			"last_updated_on": frappe.utils.format_datetime(self.modified),
+			"hide_chrome": not wiki_space,
 		}
+
+		if not wiki_space:
+			return context
+
+		wiki_space_doc = frappe.get_cached_doc("Wiki Space", wiki_space.name)
+		nested_tree, adjacent_docs = self.get_tree_and_navigation()
+
+		context.update(
+			{
+				"wiki_space": wiki_space_doc,
+				"wiki_spaces_for_switcher": frappe.get_all(
+					"Wiki Space",
+					fields=["name", "space_name", "route", "light_mode_logo", "app_switcher_logo"],
+					or_filters={"show_in_switcher": 1, "name": wiki_space["name"]},
+					order_by="switcher_order asc, space_name asc",
+				),
+				"navbar_items": process_navbar_items(wiki_space_doc.navbar_items)
+				if wiki_space_doc.navbar_items
+				else [],
+				"favicon": wiki_space_doc.favicon,
+				"nested_tree": nested_tree,
+				"prev_doc": adjacent_docs["prev"],
+				"next_doc": adjacent_docs["next"],
+			}
+		)
+
+		return context
 
 	@frappe.whitelist()
 	def get_children_count(self) -> int:

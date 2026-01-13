@@ -36,15 +36,19 @@
     {% block head %} {% endblock %}
 </head>
 <body class="min-h-screen antialiased bg-[var(--surface-white)] text-[var(--ink-gray-9)]">
+    {% if not hide_chrome %}
     {% include "templates/wiki/includes/search_modal.html" %}
 
     <!-- Full-width navbar at top -->
     {% include "templates/wiki/includes/mobile_header.html" %}
     {% include "templates/wiki/includes/header.html" %}
+    {% endif %}
 
     <!-- Main flex container for sidebar + content (below navbar) -->
-    <div class="flex min-h-[calc(100vh-53px)]">
+    <div class="flex {{ 'min-h-[calc(100vh-53px)]' if not hide_chrome else 'min-h-screen' }}">
+        {% if not hide_chrome %}
         {% include "templates/wiki/includes/sidebar.html" %}
+        {% endif %}
 
         <!-- Main content area - grows to fill remaining space -->
         <main class="flex-1 min-w-0 px-4 py-6 lg:px-6 lg:py-8 xl:px-12 flex justify-center">
