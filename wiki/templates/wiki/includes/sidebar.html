@@ -84,8 +84,8 @@
                         this.navigateTo(event.state.route, false);
                     }
                 });
-                // Set initial state
-                history.replaceState({ route: this.currentRoute }, '', window.location.pathname);
+                // Set initial state (preserve hash for TOC anchor links)
+                history.replaceState({ route: this.currentRoute }, '', window.location.pathname + window.location.hash);
             },
 
             async prefetch(route) {
