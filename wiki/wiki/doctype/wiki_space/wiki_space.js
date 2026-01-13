@@ -11,6 +11,53 @@ frappe.ui.form.on("Wiki Space", {
       });
     });
 
+    if (frm.doc.root_group) {
+      frm.add_custom_button(__("Bulk Update Routes"), () => {
+        const dialog = new frappe.ui.Dialog({
+          title: __("Update Wiki Space Routes"),
+          fields: [
+            {
+              fieldname: "current_route",
+              fieldtype: "Data",
+              label: __("Current Base Route"),
+              default: frm.doc.route,
+              read_only: 1,
+            },
+            {
+              fieldname: "new_route",
+              fieldtype: "Data",
+              label: __("New Base Route"),
+              reqd: 1,
+              description: __("Enter the new base route (without leading slash)"),
+            },
+          ],
+          primary_action_label: __("Update Routes"),
+          primary_action: (values) => {
+            dialog.hide();
+            frm.call({
+              doc: frm.doc,
+              method: "update_routes",
+              args: { new_route: values.new_route },
+              freeze: true,
+              freeze_message: __("Updating routes..."),
+            }).then((r) => {
+              if (r.message) {
+                frappe.msgprint({
+                  title: __("Routes Updated"),
+                  message: __("{0} documents updated successfully", [
+                    r.message.updated_count,
+                  ]),
+                  indicator: "green",
+                });
+                frm.reload_doc();
+              }
+            });
+          },
+        });
+        dialog.show();
+      });
+    }
+
     if (!frm.doc.root_group) {
       frm.add_custom_button(__("Migrate to Version 3"), () => {
       frappe.confirm(

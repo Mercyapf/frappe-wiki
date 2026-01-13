@@ -100,11 +100,64 @@
                             @update:modelValue="updateFeedbackSetting"
                         />
                     </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+                        <div class="flex-1 mr-4">
+                            <p class="text-sm font-medium text-ink-gray-9">
+                                {{ __('Bulk Update Routes') }}
+                            </p>
+                            <p class="text-xs text-ink-gray-5 mt-0.5">
+                                {{ __('Change the base route for this space and all its pages') }}
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            @click="openUpdateRoutesDialog"
+                        >
+                            {{ __('Update') }}
+                        </Button>
+                    </div>
                 </div>
             </template>
             <template #actions="{ close }">
                 <div class="flex justify-end">
                     <Button variant="outline" @click="close">{{ __('Close') }}</Button>
+                </div>
+            </template>
+        </Dialog>
+
+        <Dialog v-model="showUpdateRoutesDialog">
+            <template #body-title>
+                <h3 class="text-xl font-semibold text-ink-gray-9">
+                    {{ __('Update Wiki Space Routes') }}
+                </h3>
+            </template>
+            <template #body-content>
+                <div class="space-y-4 py-2">
+                    <FormControl
+                        type="text"
+                        :label="__('Current Base Route')"
+                        :modelValue="space.doc?.route"
+                        :disabled="true"
+                    />
+                    <FormControl
+                        type="text"
+                        :label="__('New Base Route')"
+                        v-model="newRoute"
+                        :placeholder="__('Enter new route (without leading slash)')"
+                    />
+                </div>
+            </template>
+            <template #actions="{ close }">
+                <div class="flex justify-end gap-2">
+                    <Button variant="outline" @click="close">{{ __('Cancel') }}</Button>
+                    <Button
+                        variant="solid"
+                        :loading="updatingRoutes"
+                        @click="updateRoutes(close)"
+                    >
+                        {{ __('Update Routes') }}
+                    </Button>
                 </div>
             </template>
         </Dialog>
@@ -114,7 +167,7 @@
 <script setup>
 import { ref, computed, watch, toRef } from 'vue';
 import { useRoute } from 'vue-router';
-import { createDocumentResource, createResource, Button, Dialog, Switch } from 'frappe-ui';
+import { createDocumentResource, createResource, Button, Dialog, Switch, FormControl } from 'frappe-ui';
 import WikiDocumentList from '../components/WikiDocumentList.vue';
 import { useSidebarResize } from '../composables/useSidebarResize';
 import { useContributionMode, currentBatch } from '../composables/useContributionMode';
@@ -137,6 +190,9 @@ const {
 } = useContributionMode(spaceIdRef);
 
 const showSettingsDialog = ref(false);
+const showUpdateRoutesDialog = ref(false);
+const newRoute = ref('');
+const updatingRoutes = ref(false);
 
 const enableFeedbackCollection = ref(false);
 const updatingFeedbackSetting = ref(false);
@@ -153,7 +209,10 @@ const currentContributionId = computed(() => route.params.contributionId || null
 const space = createDocumentResource({
     doctype: 'Wiki Space',
     name: props.spaceId,
-    auto: true
+    auto: true,
+    whitelistedMethods: {
+        updateRoutes: 'update_routes',
+    },
 });
 
 watch(() => space.doc, (doc) => {
@@ -197,6 +256,29 @@ async function updatePublishSetting(value) {
         isPublished.value = !value;
     } finally {
         updatingPublishSetting.value = false;
+    }
+}
+
+function openUpdateRoutesDialog() {
+    newRoute.value = space.doc?.route || '';
+    showUpdateRoutesDialog.value = true;
+}
+
+async function updateRoutes(close) {
+    if (!newRoute.value?.trim()) {
+        return;
+    }
+
+    updatingRoutes.value = true;
+    try {
+        await space.updateRoutes.submit({ new_route: newRoute.value.trim() });
+        close();
+        await space.reload();
+        await refreshTree();
+    } catch (error) {
+        console.error('Failed to update routes:', error);
+    } finally {
+        updatingRoutes.value = false;
     }
 }
 

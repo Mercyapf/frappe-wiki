@@ -122,3 +122,76 @@ class WikiSpace(Document):
 			}
 		)
 		leaf_doc.insert(ignore_permissions=True)
+
+	@frappe.whitelist()
+	def update_routes(self, new_route: str) -> dict:
+		"""Update Wiki Space route and all Wiki Documents under it."""
+		frappe.only_for("Wiki Manager")
+
+		from frappe.utils.nestedset import get_descendants_of
+
+		new_route = new_route.strip().strip("/")
+
+		if not new_route:
+			frappe.throw("Route cannot be empty")
+
+		old_route = self.route
+		if old_route == new_route:
+			frappe.throw("New route is the same as current route")
+
+		if not self.root_group:
+			frappe.throw("This Wiki Space has no root group. Migrate to Version 3 first.")
+
+		# Check for conflicts
+		existing = frappe.db.get_value("Wiki Space", {"route": new_route, "name": ("!=", self.name)})
+		if existing:
+			frappe.throw(f"Route '{new_route}' is already used by another Wiki Space")
+
+		# Get all documents under this space
+		descendants = get_descendants_of("Wiki Document", self.root_group, ignore_permissions=True)
+		all_docs = [self.root_group, *list(descendants)]
+
+		# Batch update document routes
+		updated_count = self._batch_update_document_routes(all_docs, old_route, new_route)
+
+		# Update space route
+		self.route = new_route
+		self.save()
+
+		return {"updated_count": updated_count}
+
+	def _batch_update_document_routes(self, doc_names: list, old_route: str, new_route: str) -> int:
+		"""Batch update routes using SQL REPLACE."""
+		if not doc_names:
+			return 0
+
+		placeholders = ", ".join(["%s"] * len(doc_names))
+
+		# Wiki Document strips leading slashes in validate, so routes are always without leading slash
+		# Handle two cases:
+		# 1. Exact match (root group): old_route -> new_route
+		# 2. Prefix match (children): old_route/... -> new_route/...
+		frappe.db.sql(
+			f"""
+			UPDATE `tabWiki Document`
+			SET route = CASE
+				WHEN route = %s THEN %s
+				WHEN route LIKE %s THEN CONCAT(%s, SUBSTRING(route, %s))
+				ELSE route
+			END,
+			modified = NOW(),
+			modified_by = %s
+			WHERE name IN ({placeholders})
+			""",
+			(
+				old_route,  # exact match old route (root group)
+				new_route,  # replace with new route
+				f"{old_route}/%",  # starts with old route (children)
+				new_route,  # new prefix
+				len(old_route) + 1,  # substring position after old_route
+				frappe.session.user,
+				*doc_names,
+			),
+		)
+
+		return len(doc_names)
