@@ -42,8 +42,8 @@ class TestReorderWikiDocumentsAPI(FrappeTestCase):
 			siblings=siblings,
 		)
 
-		# Direct reorder returns None (implicit success)
-		self.assertIsNone(result)
+		# Direct reorder returns is_contribution: False
+		self.assertFalse(result.get("is_contribution"))
 
 		# Verify sort orders were updated
 		page1.reload()
@@ -74,8 +74,8 @@ class TestReorderWikiDocumentsAPI(FrappeTestCase):
 			siblings=json.dumps([page.name]),
 		)
 
-		# Direct move returns None (implicit success)
-		self.assertIsNone(result)
+		# Direct move returns is_contribution: False
+		self.assertFalse(result.get("is_contribution"))
 
 		page.reload()
 		self.assertEqual(page.parent_wiki_document, group.name)
@@ -198,8 +198,8 @@ class TestReorderWikiDocumentsAPI(FrappeTestCase):
 			siblings=siblings,
 		)
 
-		# Direct reorder returns None (implicit success)
-		self.assertIsNone(result)
+		# Direct reorder returns is_contribution: False
+		self.assertFalse(result.get("is_contribution"))
 
 		# Verify sort orders - temp item should be skipped
 		page1.reload()
@@ -255,8 +255,8 @@ class TestReorderWikiDocumentsAPI(FrappeTestCase):
 			siblings=siblings,
 		)
 
-		# Direct reorder returns None (implicit success)
-		self.assertIsNone(result)
+		# Direct reorder returns is_contribution: False
+		self.assertFalse(result.get("is_contribution"))
 
 		# Verify sort orders were updated
 		child1.reload()
