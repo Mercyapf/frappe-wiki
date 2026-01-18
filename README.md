@@ -14,7 +14,7 @@
 <br />
 <a href="https://frappe.io/wiki">Website</a>
 -
-<a href="https://docs.frappe.io/wiki/">Documentation</a>
+<a href="https://docs.frappe.io/wiki-v2/">Documentation</a>
 </div>
 
 ## Frappe Wiki
