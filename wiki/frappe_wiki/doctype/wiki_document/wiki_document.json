@@ -8,6 +8,8 @@
 	"field_order": [
 		"title",
 		"route",
+		"slug",
+		"doc_key",
 		"column_break_sfff",
 		"is_published",
 		"is_private",
@@ -76,6 +78,20 @@
 			"in_list_view": 1,
 			"in_standard_filter": 1,
 			"label": "Route"
+		},
+		{
+			"fieldname": "slug",
+			"fieldtype": "Data",
+			"label": "Slug"
+		},
+		{
+			"fieldname": "doc_key",
+			"fieldtype": "Data",
+			"label": "Doc Key",
+			"hidden": 1,
+			"read_only": 1,
+			"unique": 1,
+			"no_copy": 1
 		},
 		{
 			"fieldname": "content",

@@ -69,6 +69,7 @@ class WikiDocument(NestedSet):
 		from frappe.types import DF
 
 		content: DF.Code | None
+		doc_key: DF.Data | None
 		is_group: DF.Check
 		is_private: DF.Check
 		is_published: DF.Check
@@ -77,14 +78,32 @@ class WikiDocument(NestedSet):
 		parent_wiki_document: DF.Link | None
 		rgt: DF.Int
 		route: DF.Data | None
+		slug: DF.Data | None
 		sort_order: DF.Int
 		title: DF.Data
 	# end: auto-generated types
 
 	def validate(self):
+		self.set_doc_key()
+		self.set_slug()
 		self.set_route()
 		self.remove_leading_slash_from_route()
 		self.set_boilerplate_content()
+
+	def set_doc_key(self):
+		"""Ensure doc_key is set and immutable."""
+		if not self.doc_key:
+			self.doc_key = frappe.generate_hash(length=12)
+			return
+		if not self.is_new():
+			existing = frappe.db.get_value("Wiki Document", self.name, "doc_key")
+			if existing and self.doc_key != existing:
+				self.doc_key = existing
+
+	def set_slug(self):
+		"""Ensure slug is set for route generation."""
+		if not self.slug:
+			self.slug = frappe.website.utils.cleanup_page_name(self.title).replace("_", "-")
 
 	def set_boilerplate_content(self):
 		if not self.content and not self.is_group:
@@ -130,7 +149,7 @@ class WikiDocument(NestedSet):
 						route_parts.append(ancestor_route)
 
 			# Add this document's slug
-			slug = frappe.website.utils.cleanup_page_name(self.title).replace("_", "-")
+			slug = self.slug or frappe.website.utils.cleanup_page_name(self.title).replace("_", "-")
 			route_parts.append(slug)
 
 			self.route = "/".join(route_parts)
