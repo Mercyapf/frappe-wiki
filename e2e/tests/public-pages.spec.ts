@@ -235,6 +235,128 @@ That is all.`;
 		});
 	});
 
+	test.describe('Heading Anchors', () => {
+		test('should show hash link on heading hover in public page', async ({
+			page,
+			request,
+		}) => {
+			await page.setViewportSize({ width: 1100, height: 900 });
+
+			await page.goto('/wiki');
+			await page.waitForLoadState('networkidle');
+
+			const spaceLink = page.locator('a[href*="/wiki/spaces/"]').first();
+			await expect(spaceLink).toBeVisible({ timeout: 5000 });
+			await spaceLink.click();
+			await page.waitForLoadState('networkidle');
+
+			const createFirstPage = page.locator(
+				'button:has-text("Create First Page")',
+			);
+			const newPageButton = page.locator('button[title="New Page"]');
+
+			const pageTitle = `anchor-test-page-${Date.now()}`;
+
+			if (
+				await createFirstPage.isVisible({ timeout: 2000 }).catch(() => false)
+			) {
+				await createFirstPage.click();
+			} else {
+				await newPageButton.click();
+			}
+
+			await page.getByLabel('Title').fill(pageTitle);
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save Draft' })
+				.click();
+			await page.waitForLoadState('networkidle');
+
+			await page.locator('aside').getByText(pageTitle, { exact: true }).click();
+			await page.waitForURL(/\/draft\/[^/?#]+/);
+			const draftMatch = page.url().match(/\/draft\/([^/?#]+)/);
+			expect(draftMatch).toBeTruthy();
+			const docKey = decodeURIComponent(draftMatch?.[1] ?? '');
+
+			const editor = page.locator('.ProseMirror, [contenteditable="true"]');
+			await expect(editor).toBeVisible({ timeout: 10000 });
+			await page.waitForFunction(() => window.wikiEditor !== undefined, {
+				timeout: 10000,
+			});
+
+			const markdownContent = `## Heading One
+
+Intro text.
+
+## Heading Two
+
+More text.
+
+## Heading Three
+
+End.`;
+
+			await page.evaluate((content) => {
+				window.wikiEditor.commands.setContent(content, {
+					contentType: 'markdown',
+				});
+			}, markdownContent);
+
+			await expect(editor.locator('h2:has-text("Heading One")')).toBeVisible({
+				timeout: 5000,
+			});
+
+			await editor.click();
+			await page.waitForTimeout(500);
+
+			await page.click('button:has-text("Save Draft")');
+			await page.waitForLoadState('networkidle');
+			await page.waitForTimeout(2000);
+
+			await page.getByRole('button', { name: 'Submit for Review' }).click();
+			await page.getByRole('button', { name: 'Submit' }).click();
+			await expect(page).toHaveURL(/\/wiki\/change-requests\//, {
+				timeout: 10000,
+			});
+			await page.getByRole('button', { name: 'Merge' }).click();
+			await expect(
+				page.locator('text=Change request merged').first(),
+			).toBeVisible({ timeout: 15000 });
+
+			const routes = await getList<WikiDocumentRoute>(
+				request,
+				'Wiki Document',
+				{
+					fields: ['route', 'doc_key'],
+					filters: { doc_key: docKey },
+					limit: 1,
+				},
+			);
+			expect(routes.length).toBe(1);
+			const publicUrl = `/${routes[0].route}`;
+
+			const publicPage = await page.context().newPage();
+			await publicPage.setViewportSize({ width: 1100, height: 900 });
+			await publicPage.goto(publicUrl);
+			await publicPage.waitForLoadState('networkidle');
+
+			const heading = publicPage.locator(
+				'#wiki-content h2:has-text("Heading Two")',
+			);
+			await expect(heading).toBeVisible({ timeout: 10000 });
+			await heading.scrollIntoViewIfNeeded();
+
+			const anchor = heading.locator('.heading-anchor');
+			await expect(anchor).toHaveCount(1);
+			await expect(anchor).toHaveCSS('opacity', '0');
+
+			await heading.hover();
+			await expect(anchor).toHaveCSS('opacity', '1');
+
+			await publicPage.close();
+		});
+	});
+
 	test.describe('Sidebar', () => {
 		test('should show sidebar on desktop viewport', async ({ page }) => {
 			await page.setViewportSize({ width: 1100, height: 900 });
