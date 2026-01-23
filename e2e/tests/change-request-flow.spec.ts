@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { getList } from '../helpers/frappe';
+import { callMethod, getList } from '../helpers/frappe';
 
 interface WikiDocumentRoute {
 	route: string;
@@ -151,5 +151,166 @@ test.describe('Change Request Flow', () => {
 		await expect(page.getByText(updatedContent)).toBeVisible({
 			timeout: 10000,
 		});
+	});
+
+	test('should merge multiple change requests with added folders and pages', async ({
+		page,
+		request,
+	}) => {
+		await page.goto('/wiki/spaces');
+		await page.waitForLoadState('networkidle');
+
+		// Create a new space
+		await page.getByRole('button', { name: 'New Space' }).click();
+		await page.waitForSelector('[role="dialog"]', { state: 'visible' });
+
+		const timestamp = Date.now();
+		const spaceName = `CR Multi Space ${timestamp}`;
+		const spaceRoute = `cr-multi-space-${timestamp}`;
+
+		await page.getByLabel('Space Name').fill(spaceName);
+		await page.getByLabel('Route').fill(spaceRoute);
+		await page
+			.getByRole('dialog')
+			.getByRole('button', { name: 'Create' })
+			.click();
+		await page.waitForLoadState('networkidle');
+		await expect(page).toHaveURL(/\/wiki\/spaces\//);
+
+		const spaceUrl = page.url();
+		const spaceId = spaceUrl.split('/wiki/spaces/')[1];
+
+		const createGroup = async (title: string) => {
+			await page.locator('button[title="New Group"]').click();
+			await page.getByRole('dialog').getByLabel('Title').fill(title);
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save Draft' })
+				.click();
+			await page.waitForSelector(`aside >> text=${title}`, {
+				timeout: 10000,
+			});
+		};
+
+		const addPageToGroup = async (groupTitle: string, pageTitle: string) => {
+			const groupItem = page
+				.locator('aside .draggable-item', { hasText: groupTitle })
+				.first();
+			await groupItem.hover();
+			await groupItem.locator('button').last().click();
+			await page.getByText('Add Page', { exact: true }).click();
+			await page.getByRole('dialog').getByLabel('Title').fill(pageTitle);
+			await page
+				.getByRole('dialog')
+				.getByRole('button', { name: 'Save Draft' })
+				.click();
+			const pageEntry = page
+				.locator('aside')
+				.getByText(pageTitle, { exact: true });
+			await pageEntry.waitFor({ state: 'attached', timeout: 10000 });
+			if (!(await pageEntry.isVisible())) {
+				await page
+					.locator('aside')
+					.getByText(groupTitle, { exact: true })
+					.click();
+			}
+			await expect(pageEntry).toBeVisible({ timeout: 10000 });
+		};
+
+		const submitChangeRequestForPage = async (
+			pageTitle: string,
+			groupTitle: string,
+		) => {
+			const pageEntry = page
+				.locator('aside')
+				.getByText(pageTitle, { exact: true });
+			if (!(await pageEntry.isVisible())) {
+				await page
+					.locator('aside')
+					.getByText(groupTitle, { exact: true })
+					.click();
+			}
+			await pageEntry.click();
+			await page.waitForURL(/\/draft\//);
+			await page.getByRole('button', { name: 'Submit for Review' }).click();
+			await page.getByRole('button', { name: 'Submit' }).click();
+			await expect(page).toHaveURL(/\/wiki\/change-requests\//, {
+				timeout: 10000,
+			});
+			return page.url();
+		};
+
+		const mergeChangeRequest = async (url: string) => {
+			await page.goto(url);
+			await page.getByRole('button', { name: 'Merge' }).click();
+			await expect(
+				page.locator('text=Change request merged').first(),
+			).toBeVisible({ timeout: 15000 });
+		};
+
+		// Change request 1
+		const cr1GroupA = `CR1 Folder A ${timestamp}`;
+		const cr1GroupB = `CR1 Folder B ${timestamp}`;
+		const cr1Page = `CR1 Page ${timestamp}`;
+
+		await createGroup(cr1GroupA);
+		await createGroup(cr1GroupB);
+		await addPageToGroup(cr1GroupA, cr1Page);
+
+		const cr1Url = await submitChangeRequestForPage(cr1Page, cr1GroupA);
+
+		// Change request 2 (created after CR1 is submitted)
+		await page.goto('/wiki/spaces');
+		await page.waitForLoadState('networkidle');
+		await page.getByText(spaceName, { exact: true }).click();
+		await page.waitForLoadState('networkidle');
+
+		const cr2GroupA = `CR2 Folder A ${timestamp}`;
+		const cr2GroupB = `CR2 Folder B ${timestamp}`;
+		const cr2Page = `CR2 Page ${timestamp}`;
+
+		await createGroup(cr2GroupA);
+		await createGroup(cr2GroupB);
+		await addPageToGroup(cr2GroupA, cr2Page);
+
+		const cr2Url = await submitChangeRequestForPage(cr2Page, cr2GroupA);
+
+		// Merge both change requests
+		await mergeChangeRequest(cr1Url);
+		await mergeChangeRequest(cr2Url);
+
+		// Verify merged tree contains all folders and pages
+		type TreeNode = {
+			title?: string;
+			children?: TreeNode[];
+		};
+
+		const tree = await callMethod<{ children: TreeNode[] }>(
+			request,
+			'wiki.api.wiki_space.get_wiki_tree',
+			{ space_id: spaceId },
+		);
+
+		const titles = new Set<string>();
+		const collectTitles = (nodes: TreeNode[] = []) => {
+			for (const node of nodes) {
+				if (node?.title) titles.add(node.title);
+				if (node?.children?.length) collectTitles(node.children);
+			}
+		};
+		collectTitles(tree?.children || []);
+
+		const expectedTitles = [
+			cr1GroupA,
+			cr1GroupB,
+			cr1Page,
+			cr2GroupA,
+			cr2GroupB,
+			cr2Page,
+		];
+
+		for (const title of expectedTitles) {
+			expect(titles.has(title)).toBeTruthy();
+		}
 	});
 });
