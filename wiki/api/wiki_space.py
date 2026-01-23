@@ -108,6 +108,8 @@ def reorder_wiki_documents(
 	if parent_changed:
 		rebuild_wiki_tree()
 
+	_sync_main_revision_for_space(_get_wiki_space_for_document(doc.name))
+
 	return {"is_contribution": False}
 
 
@@ -237,6 +239,24 @@ def _get_wiki_space_for_document(doc_name: str) -> str | None:
 		current = frappe.db.get_value("Wiki Document", current, "parent_wiki_document")
 
 	return None
+
+
+def _sync_main_revision_for_space(space_name: str | None) -> None:
+	"""Refresh main_revision after direct edits to keep CRs aligned with live tree."""
+	if not space_name:
+		return
+
+	from wiki.frappe_wiki.doctype.wiki_revision.wiki_revision import (
+		create_revision_from_live_tree,
+	)
+
+	space = frappe.get_doc("Wiki Space", space_name)
+	revision = create_revision_from_live_tree(
+		space.name,
+		message="Direct reorder",
+		parent_revision=space.main_revision,
+	)
+	frappe.db.set_value("Wiki Space", space.name, "main_revision", revision.name)
 
 
 def rebuild_wiki_tree():
