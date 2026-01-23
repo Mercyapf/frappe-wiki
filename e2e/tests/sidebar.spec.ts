@@ -109,6 +109,7 @@ test.describe('Public Sidebar', () => {
 				.locator('aside')
 				.getByText(unpublishedPageTitle, { exact: true })
 				.click();
+			await page.waitForURL(/\/draft\/[^/?#]+/);
 			await expect(editor).toBeVisible({ timeout: 10000 });
 			await editor.click();
 			await page.keyboard.type('This is unpublished content.');

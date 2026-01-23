@@ -1,5 +1,5 @@
 import { APIRequestContext, Page, expect, test } from '@playwright/test';
-import { getList } from '../helpers/frappe';
+import { callMethod, getList } from '../helpers/frappe';
 
 interface WikiDocumentRoute {
 	route: string;
@@ -25,14 +25,24 @@ async function createPublishedTestPage(
 	title: string,
 	content?: string,
 ): Promise<string> {
-	// Navigate to wiki and click first space
-	await page.goto('/wiki');
+	// Create a dedicated space for this test
+	await page.goto('/wiki/spaces');
 	await page.waitForLoadState('networkidle');
 
-	const spaceLink = page.locator('a[href*="/wiki/spaces/"]').first();
-	await expect(spaceLink).toBeVisible({ timeout: 5000 });
-	await spaceLink.click();
+	const timestamp = Date.now();
+	const spaceName = `mobile-view-space-${timestamp}`;
+	const spaceRoute = `mobile-view-space-${timestamp}`;
+
+	await page.getByRole('button', { name: 'New Space' }).click();
+	await page.waitForSelector('[role="dialog"]', { state: 'visible' });
+	await page.getByLabel('Space Name').fill(spaceName);
+	await page.getByLabel('Route').fill(spaceRoute);
+	await page
+		.getByRole('dialog')
+		.getByRole('button', { name: 'Create' })
+		.click();
 	await page.waitForLoadState('networkidle');
+	await expect(page).toHaveURL(/\/wiki\/spaces\//);
 
 	// Create a new page
 	const createFirstPage = page.locator('button:has-text("Create First Page")');
@@ -85,16 +95,27 @@ async function createPublishedTestPage(
 	await page.getByRole('button', { name: 'Submit for Review' }).click();
 	await page.getByRole('button', { name: 'Submit' }).click();
 	await expect(page).toHaveURL(/\/wiki\/change-requests\//, { timeout: 10000 });
-	await page.getByRole('button', { name: 'Merge' }).click();
-	await expect(page.locator('text=Change request merged').first()).toBeVisible({
-		timeout: 15000,
-	});
+	const crMatch = page.url().match(/\/wiki\/change-requests\/([^/?#]+)/);
+	if (!crMatch) {
+		throw new Error('Change request ID not found in URL');
+	}
+	const changeRequestId = decodeURIComponent(crMatch[1]);
+	await callMethod(
+		request,
+		'wiki.frappe_wiki.doctype.wiki_change_request.wiki_change_request.merge_change_request',
+		{ name: changeRequestId },
+	);
 
-	const routes = await getList<WikiDocumentRoute>(request, 'Wiki Document', {
-		fields: ['route', 'doc_key'],
-		filters: { doc_key: docKey },
-		limit: 1,
-	});
+	let routes: WikiDocumentRoute[] = [];
+	for (let attempt = 0; attempt < 5; attempt++) {
+		routes = await getList<WikiDocumentRoute>(request, 'Wiki Document', {
+			fields: ['route', 'doc_key'],
+			filters: { doc_key: docKey },
+			limit: 1,
+		});
+		if (routes.length) break;
+		await page.waitForTimeout(500);
+	}
 	if (!routes.length || !routes[0].route) {
 		throw new Error('Public route not found for doc');
 	}
@@ -241,12 +262,9 @@ test.describe('Mobile View', () => {
 			await expect(bottomSheet).toBeVisible({ timeout: 5000 });
 
 			// Find and click the close button (X icon) inside bottom sheet
-			const closeButton = bottomSheet
-				.locator('button')
-				.filter({
-					has: page.locator('svg'),
-				})
-				.last();
+			const closeButton = bottomSheet.getByRole('button', {
+				name: 'Close sidebar',
+			});
 			await closeButton.click();
 
 			// Bottom sheet should be hidden
@@ -279,8 +297,8 @@ test.describe('Mobile View', () => {
 			await expect(nav).toBeVisible();
 
 			// Should have at least one wiki link (the page we just created)
-			const wikiLinks = nav.locator('a');
-			await expect(wikiLinks.first()).toBeVisible();
+			const targetLink = nav.getByText(pageTitle, { exact: true });
+			await expect(targetLink).toBeVisible();
 		});
 
 		test('should close bottom sheet when navigation link is clicked', async ({
@@ -306,9 +324,9 @@ test.describe('Mobile View', () => {
 
 			// Click a navigation link
 			const nav = bottomSheet.locator('nav');
-			const navLinks = nav.locator('a');
-			await expect(navLinks.first()).toBeVisible();
-			await navLinks.first().click();
+			const targetLink = nav.getByText(pageTitle, { exact: true });
+			await expect(targetLink).toBeVisible();
+			await targetLink.click();
 
 			await page.waitForLoadState('networkidle');
 
