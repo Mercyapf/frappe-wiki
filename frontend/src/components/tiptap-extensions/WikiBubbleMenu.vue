@@ -2,7 +2,28 @@
     <BubbleMenu
         v-if="editor"
         :editor="editor"
-        :tippy-options="{ duration: 100, maxWidth: 'none', zIndex: 50 }"
+        :tippy-options="{
+            duration: 100,
+            maxWidth: 'none',
+            zIndex: 50,
+            popperOptions: {
+                modifiers: [
+                    {
+                        name: 'preventOverflow',
+                        options: {
+                            boundary: 'viewport',
+                            padding: 8
+                        }
+                    },
+                    {
+                        name: 'flip',
+                        options: {
+                            fallbackPlacements: ['top', 'bottom', 'right']
+                        }
+                    }
+                ]
+            }
+        }"
         class="wiki-bubble-menu"
     >
         <div class="bubble-menu-buttons">
