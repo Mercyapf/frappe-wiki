@@ -52,7 +52,7 @@
 
                     {% if node.children %}
                         <div id="{{ node.name }}-children"
-                             class="wiki-children overflow-hidden pl-4 mt-0.5"
+                             class="wiki-children overflow-hidden mt-0.5 ml-[14px] pl-2 border-l border-[var(--outline-gray-2)]"
                              x-show="isExpanded('{{ node.name }}')"
                              x-collapse>
                             {{ render_wiki_tree(node.children, level + 1, current_route) }}
