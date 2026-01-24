@@ -4,6 +4,11 @@
 			<div class="flex gap-2">
 				<Button :title="__('New Group')" icon="folder-plus" variant="subtle" @click="openCreateDialog(rootNode, true)" />
 				<Button :title="__('New Page')" icon="file-plus" variant="subtle" @click="openCreateDialog(rootNode, false)" />
+				<Button :title="__('External Link')" variant="subtle" @click="openExternalLinkDialog(rootNode)">
+					<template #icon>
+						<LucideLink class="size-4" />
+					</template>
+				</Button>
 			</div>
 		</div>
 
@@ -32,6 +37,8 @@
 				@create="openCreateDialog"
 				@delete="openDeleteDialog"
 				@rename="openRenameDialog"
+				@external-link="openExternalLinkDialog"
+				@edit-external-link="openEditExternalLinkDialog"
 				@update="handleTreeUpdate"
 			/>
 		</div>
@@ -119,6 +126,54 @@
 				</div>
 			</template>
 		</Dialog>
+
+		<Dialog v-model="showExternalLinkDialog">
+			<template #body-title>
+				<h3 class="text-xl font-semibold text-ink-gray-9">
+					{{ __('Add External Link') }}
+				</h3>
+			</template>
+			<template #body-content>
+				<div class="space-y-4">
+					<FormControl v-model="externalLinkTitle" :label="__('Title')" type="text"
+						:placeholder="__('Enter link title')" autofocus />
+					<FormControl v-model="externalLinkUrl" :label="__('URL')" type="text"
+						:placeholder="__('https://example.com')" />
+				</div>
+			</template>
+			<template #actions="{ close }">
+				<div class="flex justify-end gap-2">
+					<Button variant="outline" @click="close">{{ __('Cancel') }}</Button>
+					<Button variant="solid" :loading="createPageResource.loading" @click="createExternalLink(close)">
+						{{ __('Save Draft') }}
+					</Button>
+				</div>
+			</template>
+		</Dialog>
+
+		<Dialog v-model="showEditExternalLinkDialog">
+			<template #body-title>
+				<h3 class="text-xl font-semibold text-ink-gray-9">
+					{{ __('Edit External Link') }}
+				</h3>
+			</template>
+			<template #body-content>
+				<div class="space-y-4">
+					<FormControl v-model="editExternalLinkTitle" :label="__('Title')" type="text"
+						:placeholder="__('Enter link title')" autofocus />
+					<FormControl v-model="editExternalLinkUrl" :label="__('URL')" type="text"
+						:placeholder="__('https://example.com')" />
+				</div>
+			</template>
+			<template #actions="{ close }">
+				<div class="flex justify-end gap-2">
+					<Button variant="outline" @click="close">{{ __('Cancel') }}</Button>
+					<Button variant="solid" :loading="updatePageResource.loading" @click="updateExternalLink(close)">
+						{{ __('Save') }}
+					</Button>
+				</div>
+			</template>
+		</Dialog>
 	</div>
 </template>
 
@@ -131,6 +186,7 @@ import { useChangeRequestMode, useChangeRequest, currentChangeRequest } from '@/
 import LucideFilePlus from '~icons/lucide/file-plus';
 import LucideFileText from '~icons/lucide/file-text';
 import LucideAlertTriangle from '~icons/lucide/alert-triangle';
+import LucideLink from '~icons/lucide/link';
 
 const props = defineProps({
 	treeData: {
@@ -195,6 +251,16 @@ const deleteChildCount = ref(0);
 const showRenameDialog = ref(false);
 const renameTitle = ref('');
 const renameNode = ref(null);
+
+const showExternalLinkDialog = ref(false);
+const externalLinkTitle = ref('');
+const externalLinkUrl = ref('');
+const externalLinkParent = ref(null);
+
+const showEditExternalLinkDialog = ref(false);
+const editExternalLinkTitle = ref('');
+const editExternalLinkUrl = ref('');
+const editExternalLinkNode = ref(null);
 
 function handleTreeUpdate(payload) {
 	if (payload.type === 'refresh') {
@@ -353,6 +419,102 @@ async function renameDocument(close) {
 		close();
 	} catch (error) {
 		toast.error(error.messages?.[0] || __('Error updating title'));
+	}
+}
+
+function openExternalLinkDialog(parentKey) {
+	externalLinkParent.value = parentKey;
+	externalLinkTitle.value = '';
+	externalLinkUrl.value = '';
+	showExternalLinkDialog.value = true;
+}
+
+async function createExternalLink(close) {
+	if (!externalLinkTitle.value.trim()) {
+		toast.warning(__('Title is required'));
+		return;
+	}
+
+	if (!externalLinkUrl.value.trim()) {
+		toast.warning(__('URL is required'));
+		return;
+	}
+
+	try {
+		if (!currentChangeRequest.value) {
+			await initChangeRequest();
+		}
+
+		if (!currentChangeRequest.value) {
+			toast.error(__('Could not create change request'));
+			return;
+		}
+
+		await createPage(
+			currentChangeRequest.value.name,
+			externalLinkParent.value,
+			externalLinkTitle.value.trim(),
+			'',
+			false,
+			true,
+			externalLinkUrl.value.trim(),
+		);
+
+		toast.success(__('External link draft created'));
+
+		if (externalLinkParent.value) {
+			expandedNodes.value[externalLinkParent.value] = true;
+		}
+
+		await loadChanges();
+		emit('refresh');
+		close();
+	} catch (error) {
+		console.error('Error creating external link:', error);
+		toast.error(error.messages?.[0] || __('Error creating draft'));
+	}
+}
+
+function openEditExternalLinkDialog(node) {
+	editExternalLinkNode.value = node;
+	editExternalLinkTitle.value = node.title || '';
+	editExternalLinkUrl.value = node.external_url || '';
+	showEditExternalLinkDialog.value = true;
+}
+
+async function updateExternalLink(close) {
+	if (!editExternalLinkTitle.value.trim()) {
+		toast.warning(__('Title is required'));
+		return;
+	}
+
+	if (!editExternalLinkUrl.value.trim()) {
+		toast.warning(__('URL is required'));
+		return;
+	}
+
+	try {
+		if (!currentChangeRequest.value) {
+			await initChangeRequest();
+		}
+
+		if (!currentChangeRequest.value) {
+			toast.error(__('Could not create change request'));
+			return;
+		}
+
+		await updatePage(currentChangeRequest.value.name, editExternalLinkNode.value.doc_key, {
+			title: editExternalLinkTitle.value.trim(),
+			external_url: editExternalLinkUrl.value.trim(),
+		});
+
+		toast.success(__('External link updated'));
+		await loadChanges();
+		emit('refresh');
+		close();
+	} catch (error) {
+		console.error('Error updating external link:', error);
+		toast.error(error.messages?.[0] || __('Error updating external link'));
 	}
 }
 </script>

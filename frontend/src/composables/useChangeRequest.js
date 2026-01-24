@@ -211,6 +211,8 @@ export function useChangeRequest() {
 		title,
 		content,
 		isGroup = false,
+		isExternalLink = false,
+		externalUrl = null,
 	) {
 		return await createPageResource.submit({
 			name: changeRequestName,
@@ -219,6 +221,8 @@ export function useChangeRequest() {
 			content,
 			is_group: isGroup,
 			is_published: true,
+			is_external_link: isExternalLink,
+			external_url: externalUrl,
 		});
 	}
 

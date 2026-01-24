@@ -203,6 +203,8 @@ def get_cr_tree(name: str) -> dict[str, Any]:
 			"slug",
 			"is_group",
 			"is_published",
+			"is_external_link",
+			"external_url",
 			"parent_key",
 			"order_index",
 			"is_deleted",
@@ -222,6 +224,8 @@ def get_cr_tree(name: str) -> dict[str, Any]:
 			"slug": item.get("slug"),
 			"is_group": item.get("is_group"),
 			"is_published": item.get("is_published"),
+			"is_external_link": item.get("is_external_link"),
+			"external_url": item.get("external_url"),
 			"parent_key": item.get("parent_key"),
 			"order_index": item.get("order_index") or 0,
 			"label": item.get("title"),
@@ -290,6 +294,8 @@ def get_cr_page(name: str, doc_key: str) -> dict[str, Any]:
 			"slug",
 			"is_group",
 			"is_published",
+			"is_external_link",
+			"external_url",
 			"parent_key",
 			"order_index",
 			"content_blob",
@@ -311,6 +317,8 @@ def get_cr_page(name: str, doc_key: str) -> dict[str, Any]:
 		"slug": item.get("slug"),
 		"is_group": item.get("is_group"),
 		"is_published": item.get("is_published"),
+		"is_external_link": item.get("is_external_link"),
+		"external_url": item.get("external_url"),
 		"parent_key": item.get("parent_key"),
 		"order_index": item.get("order_index"),
 		"document_name": doc_name.get("name") if doc_name else None,
@@ -353,6 +361,8 @@ def create_cr_page(
 	is_published: int = 1,
 	content: str | None = None,
 	order_index: int | None = None,
+	is_external_link: int = 0,
+	external_url: str | None = None,
 ) -> str:
 	cr = frappe.get_doc("Wiki Change Request", name)
 	head_revision = cr.head_revision
@@ -370,6 +380,8 @@ def create_cr_page(
 	item.slug = slug or cleanup_page_name(title)
 	item.is_group = 1 if is_group else 0
 	item.is_published = 1 if is_published else 0
+	item.is_external_link = 1 if is_external_link else 0
+	item.external_url = external_url
 	item.parent_key = parent_key
 	item.order_index = order_index if order_index is not None else max_order + 1
 	item.content_blob = get_or_create_content_blob(content or "")
@@ -399,6 +411,10 @@ def update_cr_page(name: str, doc_key: str, fields: dict[str, Any]) -> None:
 		item.is_group = 1 if fields["is_group"] else 0
 	if "is_published" in fields and fields["is_published"] is not None:
 		item.is_published = 1 if fields["is_published"] else 0
+	if "is_external_link" in fields and fields["is_external_link"] is not None:
+		item.is_external_link = 1 if fields["is_external_link"] else 0
+	if "external_url" in fields and fields["external_url"] is not None:
+		item.external_url = fields["external_url"]
 	if "content" in fields and fields["content"] is not None:
 		item.content_blob = get_or_create_content_blob(fields["content"])
 	if "is_deleted" in fields and fields["is_deleted"] is not None:
@@ -768,6 +784,8 @@ def normalize_item(item: dict[str, Any] | None) -> dict[str, Any] | None:
 		"slug": item.get("slug"),
 		"is_group": item.get("is_group"),
 		"is_published": item.get("is_published"),
+		"is_external_link": item.get("is_external_link"),
+		"external_url": item.get("external_url"),
 		"parent_key": item.get("parent_key"),
 		"order_index": item.get("order_index"),
 		"content_hash": item.get("content_hash"),
@@ -1113,6 +1131,8 @@ def create_merge_revision(cr: Document, merged_items: dict[str, dict[str, Any]])
 		new_item.slug = item.get("slug")
 		new_item.is_group = item.get("is_group")
 		new_item.is_published = item.get("is_published")
+		new_item.is_external_link = item.get("is_external_link")
+		new_item.external_url = item.get("external_url")
 		new_item.parent_key = item.get("parent_key")
 		new_item.order_index = item.get("order_index")
 		new_item.content_blob = item.get("content_blob")
@@ -1172,6 +1192,8 @@ def apply_merge_revision(space: Document, revision: Document) -> None:
 		doc.slug = item.get("slug") or cleanup_page_name(item.get("title") or "")
 		doc.is_group = item.get("is_group")
 		doc.is_published = item.get("is_published")
+		doc.is_external_link = item.get("is_external_link")
+		doc.external_url = item.get("external_url")
 		if doc_key == root_doc_key:
 			doc.parent_wiki_document = None
 		else:

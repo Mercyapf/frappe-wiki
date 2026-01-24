@@ -13,6 +13,8 @@
 		"column_break_meta",
 		"is_group",
 		"is_published",
+		"is_external_link",
+		"external_url",
 		"parent_key",
 		"order_index",
 		"content_blob",
@@ -55,6 +57,17 @@
 			"fieldname": "is_published",
 			"fieldtype": "Check",
 			"label": "Is Published"
+		},
+		{
+			"default": "0",
+			"fieldname": "is_external_link",
+			"fieldtype": "Check",
+			"label": "External Link"
+		},
+		{
+			"fieldname": "external_url",
+			"fieldtype": "Data",
+			"label": "External URL"
 		},
 		{
 			"fieldname": "parent_key",

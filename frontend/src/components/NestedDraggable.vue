@@ -41,6 +41,7 @@
                         <div v-else class="w-4" />
 
                         <LucideFolder v-if="element.is_group" class="size-4 text-ink-gray-5 flex-shrink-0" />
+                        <LucideLink v-else-if="element.is_external_link" class="size-4 text-ink-gray-5 flex-shrink-0" />
                         <LucideFileText v-else class="size-4 text-ink-gray-5 flex-shrink-0" />
 
                         <span
@@ -87,6 +88,8 @@
                         @create="(parent, isGroup) => emit('create', parent, isGroup)"
                         @delete="(n) => emit('delete', n)"
                         @rename="(n) => emit('rename', n)"
+                        @external-link="(parent) => emit('external-link', parent)"
+                        @edit-external-link="(el) => emit('edit-external-link', el)"
                         @update="handleNestedUpdate"
                     />
                 </div>
@@ -105,6 +108,7 @@ import { useChangeRequest, currentChangeRequest } from '@/composables/useChangeR
 import LucideChevronRight from '~icons/lucide/chevron-right';
 import LucideFolder from '~icons/lucide/folder';
 import LucideFileText from '~icons/lucide/file-text';
+import LucideLink from '~icons/lucide/link';
 import LucideMoreHorizontal from '~icons/lucide/more-horizontal';
 import LucideGripVertical from '~icons/lucide/grip-vertical';
 
@@ -139,7 +143,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['create', 'delete', 'update', 'rename']);
+const emit = defineEmits(['create', 'delete', 'update', 'rename', 'external-link', 'edit-external-link']);
 const router = useRouter();
 const { updatePage } = useChangeRequest();
 
@@ -167,6 +171,12 @@ function handleRowClick(element) {
 
     if (element.is_group) {
         toggleExpanded(element.doc_key);
+        return;
+    }
+
+    // External links open edit dialog instead of navigating
+    if (element.is_external_link) {
+        emit('edit-external-link', element);
         return;
     }
 
@@ -261,6 +271,11 @@ function getDropdownOptions(element) {
                     label: __('Add Group'),
                     icon: 'folder-plus',
                     onClick: () => emit('create', element.doc_key, true),
+                },
+                {
+                    label: __('Add External Link'),
+                    icon: 'link',
+                    onClick: () => emit('external-link', element.doc_key),
                 },
                 {
                     label: __('Rename'),

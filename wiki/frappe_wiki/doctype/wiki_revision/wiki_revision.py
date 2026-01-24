@@ -36,6 +36,8 @@ def create_revision_from_live_tree(
 			"slug",
 			"is_group",
 			"is_published",
+			"is_external_link",
+			"external_url",
 			"parent_wiki_document",
 			"sort_order",
 			"content",
@@ -80,6 +82,8 @@ def create_revision_from_live_tree(
 		item.slug = doc.get("slug") or cleanup_page_name(doc.get("title") or "")
 		item.is_group = doc.get("is_group")
 		item.is_published = doc.get("is_published")
+		item.is_external_link = doc.get("is_external_link")
+		item.external_url = doc.get("external_url")
 		item.parent_key = name_to_key.get(doc.get("parent_wiki_document"))
 		item.order_index = doc.get("sort_order") or 0
 		item.content_blob = content_blob
@@ -116,6 +120,8 @@ def clone_revision(
 			"slug",
 			"is_group",
 			"is_published",
+			"is_external_link",
+			"external_url",
 			"parent_key",
 			"order_index",
 			"content_blob",
@@ -132,6 +138,8 @@ def clone_revision(
 		new_item.slug = item.get("slug")
 		new_item.is_group = item.get("is_group")
 		new_item.is_published = item.get("is_published")
+		new_item.is_external_link = item.get("is_external_link")
+		new_item.external_url = item.get("external_url")
 		new_item.parent_key = item.get("parent_key")
 		new_item.order_index = item.get("order_index")
 		new_item.content_blob = item.get("content_blob")
@@ -219,6 +227,8 @@ def get_revision_item_map(revision: str) -> dict[str, dict[str, Any]]:
 			"slug",
 			"is_group",
 			"is_published",
+			"is_external_link",
+			"external_url",
 			"parent_key",
 			"order_index",
 			"content_blob",

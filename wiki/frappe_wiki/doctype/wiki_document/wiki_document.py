@@ -445,7 +445,16 @@ def build_nested_wiki_tree(documents: list[str]):
 	# Create a mapping of document name to document data
 	wiki_documents = frappe.db.get_all(
 		"Wiki Document",
-		fields=["name", "title", "is_group", "parent_wiki_document", "route", "sort_order"],
+		fields=[
+			"name",
+			"title",
+			"is_group",
+			"parent_wiki_document",
+			"route",
+			"sort_order",
+			"is_external_link",
+			"external_url",
+		],
 		filters={"name": ("in", documents)},
 		or_filters={"is_published": 1, "is_group": 1},
 		order_by="lft asc",
