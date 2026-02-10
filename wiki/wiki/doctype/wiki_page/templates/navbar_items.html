@@ -63,6 +63,13 @@
 		<!--sidebar-->
 	</div>
 	<div style="display: flex; align-items: center;">
+		{% if name %}
+		<a class="navbar-link mr-2 d-print-none"
+			href="/api/method/wiki.wiki.doctype.wiki_page.wiki_page.download_wiki_pdf?page_name={{ name }}"
+			style="white-space: nowrap;">
+			{{ _("Download PDF") }}
+		</a>
+		{% endif %}
 		<div class="sun-moon-container">
 			<svg class="feather feather-moon hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
 				viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
