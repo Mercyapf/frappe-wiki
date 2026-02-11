@@ -7,9 +7,6 @@ description = "Simple Wiki App"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = [
-    # "frappe~=15.0.0" # Installed and managed by bench.
-]
 
 [project.urls]
 Homepage = "https://frappe.io/wiki"
@@ -61,5 +58,6 @@ quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
 
-[tool.bench]
-frappe-dependencies = ["frappe>=15.0.0,<16.0.0"]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"
