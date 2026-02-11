@@ -370,7 +370,7 @@ highlight.js@~11.7.0:
 
 htmldiff-js@^1.0.5:
   version "1.0.5"
-  resolved "https://registry.npmjs.org/htmldiff-js/-/htmldiff-js-1.0.5.tgz"
+  resolved "https://registry.yarnpkg.com/htmldiff-js/-/htmldiff-js-1.0.5.tgz#356df9eb646ab31c907f48051e2ef93f754c55f0"
   integrity sha512-rmow9353OK0elkub15Sbze8Nj7BYfduqoJJw4yEvHHjOcHeCazNPk0PoUbjE8SvxKgjymeRIFU/OnS8jtitRtA==
 
 inherits@^2.0.3, inherits@~2.0.3:
